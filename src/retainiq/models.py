@@ -1,15 +1,9 @@
-"""Train LightGBM + CatBoost base learners and stack them with a logistic
-meta-learner; calibrate the final probabilities.
+"""LightGBM + CatBoost stacked ensemble with isotonic calibration.
 
-Public API:
-    train_lightgbm_oof(X, y, splitter) -> (oof_proba, fitted_models)
-    train_catboost_oof(X, y, splitter, cat_features) -> (oof_proba, fitted_models)
-    fit_meta(oof_lgb, oof_cat, y) -> meta_model
-    predict_stacked(meta, models_lgb, models_cat, X_test, cat_features) -> proba
-    calibrate_isotonic(p_val, y_val) -> calibrator
+We build OOF predictions across 5 stratified folds for both base learners,
+fit a logistic regression on the two-column OOF matrix, then calibrate the
+final probabilities via isotonic regression on the same OOF set.
 """
-
-from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -22,29 +16,24 @@ from sklearn.model_selection import StratifiedKFold
 from . import config
 
 
-# ---------------------------------------------------------------------------
-# Bundle returned by training so predict.py has everything it needs
-# ---------------------------------------------------------------------------
 @dataclass
 class StackedBundle:
-    lgb_models: list  # one per fold
-    cat_models: list  # one per fold
+    """Everything `predict.py` needs to score a fresh test row."""
+    lgb_models: list
+    cat_models: list
     meta_model: LogisticRegression
     calibrator: IsotonicRegression
     cat_feature_indices: list[int]
     feature_columns: list[str]
 
 
-# ---------------------------------------------------------------------------
-# LightGBM with OOF
-# ---------------------------------------------------------------------------
 def train_lightgbm_oof(
     X: pd.DataFrame,
     y: pd.Series,
     splitter: StratifiedKFold,
     params: dict | None = None,
 ) -> tuple[np.ndarray, list]:
-    import lightgbm as lgb  # imported lazily so config.py is free of heavy deps
+    import lightgbm as lgb  # imported lazily; keeps config.py heavy-dep-free
 
     pos_weight = (y == 0).sum() / max((y == 1).sum(), 1)
     base_params = {
@@ -71,7 +60,7 @@ def train_lightgbm_oof(
         X_tr, X_va = X.iloc[tr], X.iloc[va]
         y_tr, y_va = y.iloc[tr], y.iloc[va]
 
-        # Tell LightGBM which columns are categorical via dtype.
+        # LightGBM picks up category dtype automatically.
         train_set = lgb.Dataset(X_tr, label=y_tr, free_raw_data=False)
         val_set = lgb.Dataset(X_va, label=y_va, reference=train_set, free_raw_data=False)
 
@@ -88,9 +77,6 @@ def train_lightgbm_oof(
     return oof, models
 
 
-# ---------------------------------------------------------------------------
-# CatBoost with OOF
-# ---------------------------------------------------------------------------
 def train_catboost_oof(
     X: pd.DataFrame,
     y: pd.Series,
@@ -119,7 +105,7 @@ def train_catboost_oof(
     oof = np.zeros(len(y))
     models: list = []
 
-    # CatBoost wants object/string for categoricals, not pandas.Categorical.
+    # CatBoost expects strings for categoricals, not pandas.Categorical.
     X_str = X.copy()
     for idx in cat_features:
         col = X.columns[idx]
@@ -140,11 +126,7 @@ def train_catboost_oof(
     return oof, models
 
 
-# ---------------------------------------------------------------------------
-# Meta learner + calibration
-# ---------------------------------------------------------------------------
 def fit_meta(oof_lgb: np.ndarray, oof_cat: np.ndarray, y: pd.Series) -> LogisticRegression:
-    """Logistic regression on the two OOF prediction columns."""
     Z = np.column_stack([oof_lgb, oof_cat])
     meta = LogisticRegression(C=1.0, max_iter=1000, random_state=config.RANDOM_SEED)
     meta.fit(Z, y)
@@ -161,29 +143,20 @@ def stacked_oof(
 
 
 def calibrate_isotonic(p_uncal: np.ndarray, y_true: pd.Series) -> IsotonicRegression:
-    """Fit an isotonic calibrator on the OOF stacked probabilities."""
     iso = IsotonicRegression(out_of_bounds="clip")
     iso.fit(p_uncal, y_true)
     return iso
 
 
-# ---------------------------------------------------------------------------
-# Test-time prediction
-# ---------------------------------------------------------------------------
-def predict_stacked(
-    bundle: StackedBundle, X_test: pd.DataFrame
-) -> np.ndarray:
-    """Average-then-stack the fold models, apply meta + calibration."""
-    # Reorder to training columns
+def predict_stacked(bundle: StackedBundle, X_test: pd.DataFrame) -> np.ndarray:
+    """Score X_test through every fold model, then meta + isotonic."""
     X_test = X_test[bundle.feature_columns]
 
-    # LightGBM: average across folds
     lgb_preds = np.mean(
         [m.predict(X_test, num_iteration=m.best_iteration) for m in bundle.lgb_models],
         axis=0,
     )
 
-    # CatBoost: same — but feed string-cast categoricals
     X_str = X_test.copy()
     for idx in bundle.cat_feature_indices:
         col = X_str.columns[idx]
@@ -193,9 +166,6 @@ def predict_stacked(
         axis=0,
     )
 
-    # Meta
     Z = np.column_stack([lgb_preds, cat_preds])
     p_uncal = bundle.meta_model.predict_proba(Z)[:, 1]
-
-    # Calibration
     return bundle.calibrator.predict(p_uncal)

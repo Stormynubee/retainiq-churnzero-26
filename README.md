@@ -23,50 +23,70 @@ Primary metric: **PR-AUC** (not ROC-AUC — read the rubric carefully).
 ## Quickstart
 
 ```powershell
-# 1. (one time) install Python deps
+# 1. one-time install
 pip install -r requirements.txt
 
-# 2. train + write submission
+# 2. train the stacked ensemble (~4 min on a laptop)
 python -m scripts.train
+
+# 3. score the test set and write the submission CSV
 python -m scripts.predict
 
-# Outputs:
-#   submission/ChurnZero_RetainIQ_Predictions.csv   <- the deliverable
-#   data/processed/oof_predictions.parquet          <- for stacking / debugging
-#   data/processed/feature_importances.csv          <- for slide 9
+# 4. build uplift, fairness, and the four deck charts
+python -m scripts.build_artifacts
+
+# 5. open the narrative notebook (works as a .py via Jupytext or VS Code)
+jupyter notebook notebooks/retainiq_story.py
 ```
+
+Key outputs:
+
+| Path | What it is |
+|---|---|
+| `submission/ChurnZero_RetainIQ_Predictions.csv` | the deliverable (2,026 rows, format-validated) |
+| `data/processed/training_metrics.json` | PR-AUC, F1, business cost at both thresholds |
+| `data/processed/cost_curve.csv` | full threshold sweep (powers slide 8) |
+| `data/processed/feature_importances.csv` | top drivers (powers slide 9) |
+| `data/processed/uplift_segmentation.csv` | persuadable / sleeping-dog counts (slide 10) |
+| `data/processed/fairness_summary.csv` | demographic-parity & equal-opportunity diffs (slide 12) |
+| `deck/charts/*.png` | 4 slide-ready PNGs (08, 09, 10, 12) |
 
 ## Repo layout
 
 ```
 churnzero-26/
-├── README.md                    <- you are here
-├── requirements.txt             <- pinned deps
+├── README.md                    you are here
+├── requirements.txt             pinned deps
 ├── data/
-│   ├── raw/                     <- original CSVs + problem PDF
-│   └── processed/               <- generated artifacts (not committed)
-├── docs/specs/                  <- the design spec (the source of truth)
-├── src/retainiq/                <- importable modules
-│   ├── config.py                <- paths, cost matrix, seeds
-│   ├── data.py                  <- load + split + leakage guards
-│   ├── features.py              <- feature engineering
-│   ├── models.py                <- LightGBM, CatBoost, stacked ensemble
-│   ├── threshold.py             <- cost-aware threshold sweep
-│   ├── evaluate.py              <- PR-AUC, F1, business cost
-│   ├── uplift.py                <- T-learner / X-learner (Layer 3)
-│   ├── fairness.py              <- demographic parity (Layer 5)
-│   ├── submit.py                <- writes submission.csv per spec
-│   └── pipeline.py              <- end-to-end orchestrator
+│   ├── raw/                     CSVs + problem PDF (gitignored)
+│   └── processed/               generated artifacts (gitignored)
+├── docs/
+│   ├── specs/                   the design spec
+│   └── RUN_NOTES.md             living log of run results
+├── src/retainiq/                importable modules
+│   ├── config.py                paths, cost matrix, seeds
+│   ├── data.py                  load + split + leakage guards
+│   ├── features.py              feature engineering
+│   ├── models.py                LightGBM + CatBoost stacked ensemble
+│   ├── threshold.py             cost-aware threshold sweep
+│   ├── evaluate.py              PR-AUC, F1, business cost
+│   ├── uplift.py                T-learner / X-learner (Layer 3)
+│   ├── fairness.py              demographic parity (Layer 5)
+│   ├── submit.py                writes submission.csv per spec
+│   └── pipeline.py              end-to-end orchestrator
 ├── scripts/
-│   ├── train.py                 <- python -m scripts.train
-│   └── predict.py               <- python -m scripts.predict
+│   ├── train.py                 fits the ensemble
+│   ├── predict.py               writes submission CSV
+│   ├── build_artifacts.py       uplift + fairness + 4 PNG charts
+│   └── audit_features.py        leakage / importance audit
 ├── notebooks/
-│   └── retainiq_main.ipynb      <- the polished narrative for judges
+│   └── retainiq_story.py        narrative reading for judges
 ├── deck/
-│   └── retainiq_outline.md      <- 15-slide outline + speaker notes
+│   ├── retainiq_outline.md      15-slide outline + speaker notes
+│   └── charts/                  PNG charts for the deck
 ├── reviews/
-│   └── qa_checklist.md          <- pre-submission QA gate
-└── submission/                  <- final ZIP target
+│   └── qa_checklist.md          pre-submission QA gate
+└── submission/                  final ZIP target
 ```
 
 ## Team-split (2 people)

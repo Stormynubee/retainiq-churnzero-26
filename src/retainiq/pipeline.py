@@ -1,13 +1,4 @@
-"""End-to-end orchestrator: train -> evaluate -> predict -> submit.
-
-Two public entry points:
-    train()    -> fits the stacked ensemble, writes bundle + metrics
-    predict()  -> loads bundle, scores test, writes submission CSV
-
-This module is intentionally thin — it composes the smaller modules.
-"""
-
-from __future__ import annotations
+"""End-to-end glue: train and predict entry points used by the CLI scripts."""
 
 import json
 import sys
@@ -17,8 +8,8 @@ import joblib
 import numpy as np
 import pandas as pd
 
-# Windows consoles default to cp1252; force UTF-8 so we can print INR symbol.
-try:  # pragma: no cover -- environment-dependent
+# Windows powershell defaults to cp1252 and dies on the rupee glyph.
+try:
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 except Exception:

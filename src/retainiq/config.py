@@ -1,16 +1,7 @@
-"""Single source of truth for paths, costs, seeds, and column groups.
-
-Every other module imports from here. If a constant is hardcoded
-elsewhere, that is a bug — fix the caller, not by adding a duplicate.
-"""
-
-from __future__ import annotations
+"""Project-wide constants: paths, costs, seeds, column groups."""
 
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# Paths
-# ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 DATA_RAW = PROJECT_ROOT / "data" / "raw"
@@ -20,47 +11,34 @@ SUBMISSION_DIR = PROJECT_ROOT / "submission"
 TRAIN_CSV = DATA_RAW / "ChurnZero_dataset_v1.csv"
 TEST_CSV = DATA_RAW / "ChurnZero_test_v1.csv"
 
-# Submission file naming follows the official ZIP contract.
+# Naming follows the official ZIP contract from the problem PDF.
 TEAM_NAME = "RetainIQ"
 SUBMISSION_CSV = SUBMISSION_DIR / f"ChurnZero_{TEAM_NAME}_Predictions.csv"
 
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 SUBMISSION_DIR.mkdir(parents=True, exist_ok=True)
 
-# ---------------------------------------------------------------------------
-# Reproducibility
-# ---------------------------------------------------------------------------
 RANDOM_SEED = 42
-N_SPLITS = 5  # stratified k-fold
+N_SPLITS = 5
 
-# ---------------------------------------------------------------------------
-# Business cost matrix (from the official problem statement)
-# ---------------------------------------------------------------------------
-# FN: predicted not-churn but actually churned -> lost CLV
-# FP: predicted churn but actually loyal -> wasted retention spend
-FN_COST = 40_000  # rupees
-FP_COST = 500  # rupees
+# From the problem statement:
+#   FN cost = INR 40,000 (lost CLV from a missed churner)
+#   FP cost = INR 500    (wasted retention call)
+FN_COST = 40_000
+FP_COST = 500
 
-# Closed-form cost-optimal threshold for perfectly calibrated probabilities:
-#   predict 1 iff p > FP_COST / (FN_COST + FP_COST)
-THEORETICAL_OPTIMAL_THRESHOLD = FP_COST / (FN_COST + FP_COST)  # ≈ 0.01235
+# Closed-form optimum for calibrated probabilities (Bayes risk minimiser).
+THEORETICAL_OPTIMAL_THRESHOLD = FP_COST / (FN_COST + FP_COST)  # ~0.01235
 
-# ---------------------------------------------------------------------------
-# Target / id
-# ---------------------------------------------------------------------------
 TARGET_COL = "churn"
 ID_COL = "customer_id"
 
-# ---------------------------------------------------------------------------
-# Treatment columns for uplift / causal layer
-# ---------------------------------------------------------------------------
+# Treatment indicators for the uplift / causal layer
 TREATMENT_COL_PRIMARY = "retention_offer_received"
 TREATMENT_COL_COMPLIANCE = "retention_offer_accepted"
 TREATMENT_COL_SECONDARY = "discount_or_fee_waiver_received"
 
-# ---------------------------------------------------------------------------
-# Categorical columns (verified against the actual training file header).
-# ---------------------------------------------------------------------------
+# Categoricals verified by inspecting the training file header.
 CATEGORICAL_COLS: list[str] = [
     "gender",
     "marital_status",
@@ -79,8 +57,8 @@ CATEGORICAL_COLS: list[str] = [
     "customer_feedback_sentiment",
 ]
 
-# Sensitive attributes for the fairness audit (Layer 5).
+# Sensitive attributes for the fairness audit.
 SENSITIVE_COLS: list[str] = ["gender", "region"]
 
-# Columns we never feed to the predictive model (id only — leak guard).
+# Never feed these to the model. customer_id is just an identifier.
 DROP_BEFORE_FEATURES: list[str] = [ID_COL]

@@ -83,9 +83,58 @@ The dataset is **highly separable** — every team will likely score PR-AUC ≥ 
 
 ### What to do next (priority order)
 
-1. **Build slide 8 chart** from `cost_curve.csv` (matplotlib or seaborn)
-2. **Run uplift module** on `retention_offer_received` and write segmentation report
-3. **Run DiCE counterfactuals** on 5-10 persuadable customers, pick the cleanest one for slide 11
-4. **Run fairness audit** on Gender + Region using OOF predictions
+1. ~~Build slide 8 chart~~ ✅ done — `deck/charts/08_cost_curve.png`
+2. ~~Run uplift module~~ ✅ done — see segmentation below
+3. **Run DiCE counterfactuals** on the 4 persuadable customers
+4. ~~Run fairness audit~~ ✅ done — see fairness summary below
 5. **Optuna 30-trial tune** of LightGBM and CatBoost (likely marginal — already saturated)
-6. **Person B**: draft slides 1-7 in PowerPoint using numbers above
+6. **Person B**: build PowerPoint from `deck/retainiq_outline.md` + the 4 PNG charts
+
+---
+
+## 2026-05-24 (later) — Uplift + fairness audit (v0.2)
+
+### Uplift segmentation
+
+T-learner using `retention_offer_received` as treatment (n_treated ~33%).
+CATE summary: mean = −0.005, std = 0.056, range [−0.999, +0.975].
+
+| Segment | n | Avg CATE | Avg P(churn) |
+|---|---|---|---|
+| sure-thing | 6,707 | −0.000 | 0.000 |
+| lost-cause | 1,248 | −0.000 | 0.999 |
+| **sleeping-dog** | **141** | **−0.272** | 0.359 |
+| **persuadable** | **4** | **+0.366** | 0.536 |
+| other | 1 | +0.000 | 0.400 |
+
+**The killer slide-10 finding**: only **4 of 8,101 customers (0.05%)** are
+genuinely persuadable. **141 customers (1.7%) are sleeping-dogs** — the
+retention offer *causes* their churn (negative CATE of −0.27).
+
+**Implication for the bank**: shrink retention contacts; never call
+sleeping-dogs; concentrate budget on the 4 persuadables.
+
+### Fairness audit (at cost-optimal threshold = 0.001)
+
+| Attribute | Demographic-parity Δ | Equal-opportunity Δ | Pass 10% rule? |
+|---|---|---|---|
+| Gender | 0.027 | 0.000 | ✅ |
+| Region | 0.013 | 0.000 | ✅ |
+
+Recall is 100% across all groups → equal opportunity perfectly satisfied.
+Predicted-positive rates differ by at most 2.7 percentage points →
+demographic parity well within the 4/5ths threshold.
+
+### Files added in this run (under `data/processed/`)
+
+- `uplift_segmentation.csv` — segment counts + averages
+- `uplift_per_customer.csv` — per-customer CATE + segment label
+- `fairness_per_group.csv` — predicted-positive rate + TPR per group
+- `fairness_summary.csv` — DP diff and EO diff per attribute
+
+### Charts written under `deck/charts/`
+
+- `08_cost_curve.png` — the killer cost slide
+- `09_feature_importance.png` — top 12 drivers
+- `10_uplift_quadrant.png` — persuadable / sleeping-dog scatter
+- `12_fairness.png` — group-level pred. positive rate + TPR

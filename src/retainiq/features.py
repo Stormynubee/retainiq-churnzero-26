@@ -1,14 +1,12 @@
-"""Feature engineering — leak-safe by construction.
+"""Feature engineering. Fit on train, transform test — never the other way around.
 
-Public API:
-    fit_transform(X_train) -> (X_train_fe, fitter_state)
-    transform(X_test, fitter_state) -> X_test_fe
+Two-call API:
+    fit_transform(X_train) -> (X_train_fe, state)
+    transform(X_test, state) -> X_test_fe
 
-The "fitter state" is just the median values + observed categories captured
-on the training set; nothing about the test set ever flows back into it.
+`state` carries forward the medians, isna flag columns, and category list
+from training so test predictions are deterministic.
 """
-
-from __future__ import annotations
 
 from dataclasses import dataclass, field
 
@@ -18,24 +16,16 @@ import pandas as pd
 from . import config
 
 
-# ---------------------------------------------------------------------------
-# State carried from fit -> transform (so test can't leak into train)
-# ---------------------------------------------------------------------------
 @dataclass
 class FeatureFitState:
-    """Everything we learned on train that we need to apply to test."""
-
     numeric_medians: dict[str, float] = field(default_factory=dict)
     isna_flag_cols: list[str] = field(default_factory=list)
     categorical_cols: list[str] = field(default_factory=list)
     final_columns: list[str] = field(default_factory=list)
 
 
-# ---------------------------------------------------------------------------
-# Engineered features (domain knowledge → strong predictors)
-# ---------------------------------------------------------------------------
 def _engineer_ratios(df: pd.DataFrame) -> pd.DataFrame:
-    """Add domain-driven ratios / deltas. Idempotent."""
+    """Domain-driven ratios + deltas. Pure function, no fitting required."""
     df = df.copy()
 
     safe = lambda x: x.replace(0, np.nan)  # avoid div-by-zero  # noqa: E731
@@ -93,13 +83,10 @@ def _engineer_ratios(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ---------------------------------------------------------------------------
-# Missingness handling
-# ---------------------------------------------------------------------------
 def _add_missingness_flags(
     df: pd.DataFrame, numeric_cols: list[str]
 ) -> tuple[pd.DataFrame, list[str]]:
-    """For numeric cols with NaNs, add an *_isna flag BEFORE imputation."""
+    """Add a *_isna column for every numeric col with NaNs, before imputation."""
     df = df.copy()
     flag_cols: list[str] = []
     for col in numeric_cols:
@@ -111,7 +98,7 @@ def _add_missingness_flags(
 
 
 def _resolve_categoricals(df: pd.DataFrame) -> pd.DataFrame:
-    """Coerce categoricals to category dtype with 'Unknown' as a real level."""
+    """Treat 'Unknown' as a real category, not a missing value to impute."""
     df = df.copy()
     for col in config.CATEGORICAL_COLS:
         if col in df.columns:
@@ -119,23 +106,16 @@ def _resolve_categoricals(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-# ---------------------------------------------------------------------------
-# Public fit/transform API
-# ---------------------------------------------------------------------------
 def fit_transform(X: pd.DataFrame) -> tuple[pd.DataFrame, FeatureFitState]:
-    """Fit on training X; return engineered frame and fitter state."""
+    """Fit on training X; return engineered frame + state for test transform."""
     state = FeatureFitState()
 
-    # 1. Engineered features (no fitting — pure functions)
     X_fe = _engineer_ratios(X)
-
-    # 2. Resolve categoricals
     X_fe = _resolve_categoricals(X_fe)
     state.categorical_cols = [
         c for c in config.CATEGORICAL_COLS if c in X_fe.columns
     ]
 
-    # 3. Missingness flags + numeric imputation (medians from TRAIN ONLY)
     numeric_cols = X_fe.select_dtypes(include=[np.number]).columns.tolist()
     X_fe, flag_cols = _add_missingness_flags(X_fe, numeric_cols)
     state.isna_flag_cols = flag_cols
@@ -144,7 +124,7 @@ def fit_transform(X: pd.DataFrame) -> tuple[pd.DataFrame, FeatureFitState]:
     state.numeric_medians = medians
     X_fe[numeric_cols] = X_fe[numeric_cols].fillna(value=medians)
 
-    # 4. Replace any inf produced by ratios with median
+    # Ratios occasionally divide by zero; replace inf with the column median.
     for col in numeric_cols:
         if np.isinf(X_fe[col]).any():
             X_fe[col] = X_fe[col].replace([np.inf, -np.inf], medians.get(col, 0.0))
@@ -154,40 +134,29 @@ def fit_transform(X: pd.DataFrame) -> tuple[pd.DataFrame, FeatureFitState]:
 
 
 def transform(X: pd.DataFrame, state: FeatureFitState) -> pd.DataFrame:
-    """Apply the fitted state to a new dataframe (e.g. test)."""
+    """Apply the fitted state to a new dataframe (test)."""
     X_fe = _engineer_ratios(X)
     X_fe = _resolve_categoricals(X_fe)
 
-    # Missingness flags — must match training shape
     for flag in state.isna_flag_cols:
         base = flag.removesuffix("_isna")
-        if base in X_fe.columns:
-            X_fe[flag] = X_fe[base].isna().astype(int)
-        else:
-            X_fe[flag] = 0
+        X_fe[flag] = X_fe[base].isna().astype(int) if base in X_fe.columns else 0
 
-    # Apply training medians for imputation (NEVER recompute on test)
     for col, median in state.numeric_medians.items():
         if col in X_fe.columns:
             X_fe[col] = X_fe[col].fillna(median).replace(
                 [np.inf, -np.inf], median
             )
 
-    # Re-order to training column order (creates any missing as 0)
+    # Match training column order; any new column is filled with 0.
     for col in state.final_columns:
         if col not in X_fe.columns:
             X_fe[col] = 0
-    X_fe = X_fe[state.final_columns]
-
-    return X_fe
+    return X_fe[state.final_columns]
 
 
 def list_categorical_indices(
     X: pd.DataFrame, state: FeatureFitState
 ) -> list[int]:
-    """Return positional indices of categorical columns (for CatBoost)."""
-    return [
-        X.columns.get_loc(c)
-        for c in state.categorical_cols
-        if c in X.columns
-    ]
+    """Positional indices of categorical columns, for CatBoost."""
+    return [X.columns.get_loc(c) for c in state.categorical_cols if c in X.columns]
