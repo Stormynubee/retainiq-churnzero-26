@@ -30,7 +30,11 @@ Then re-run `build_deck_pptx`.
 3. **Slide 4:** optional tenure × churn bar chart from EDA.
 4. **Slide 8:** ensure cost curve is large; verify caption **₹137.5k saved**, threshold **0.002**.
 5. Spell-check all slides.
-6. Export PDF: `deck/ChurnZero_RetainIQ_Presentation.pdf` (File → Save as PDF).
+6. Export PDF: `deck/ChurnZero_RetainIQ_Presentation.pdf` (File → Save as PDF), or on Windows:
+
+```powershell
+python -m scripts.export_deck_pdf
+```
 
 ## Package for Unstop
 

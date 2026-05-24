@@ -21,8 +21,8 @@
 | Item | Status |
 |---|---|
 | Predictions CSV | Ready — `submission/ChurnZero_RetainIQ_Predictions.csv` (2,026 rows) |
-| Deck PDF | Export from PPTX — see [`docs/SUBMISSION.md`](docs/SUBMISSION.md) |
-| ZIP | `python -m scripts.package_submission --strict` (after PDF) |
+| Deck PDF | Ready — `deck/ChurnZero_RetainIQ_Presentation.pdf` (`python -m scripts.export_deck_pdf` on Windows) |
+| ZIP | Ready — `submission/ChurnZero_RetainIQ.zip` (`package_submission --strict`) |
 
 Pre-upload gate: `python -m scripts.pre_upload_check`
 

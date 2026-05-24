@@ -24,6 +24,7 @@ pip install -e ".[dev]"
 | `python -m scripts.package_submission --strict` | ZIP requires deck PDF |
 | `python -m scripts.pick_persuadable_story` | Slide 11 customer story JSON |
 | `python -m scripts.build_deck_pptx` | Starter `deck/ChurnZero_RetainIQ_Presentation.pptx` (needs `.[deck]`) |
+| `python -m scripts.export_deck_pdf` | PPTX → PDF (Windows + PowerPoint) |
 
 ## Test markers
 

@@ -19,7 +19,7 @@ python -m scripts.pre_upload_check --require-pdf
 ## Deck (swayangjeet)
 
 1. Polish [`deck/ChurnZero_RetainIQ_Presentation.pptx`](../deck/ChurnZero_RetainIQ_Presentation.pptx) per [`deck/PPT_BUILD.md`](../deck/PPT_BUILD.md).
-2. Export **`deck/ChurnZero_RetainIQ_Presentation.pdf`** (File → Save as PDF).
+2. Export **`deck/ChurnZero_RetainIQ_Presentation.pdf`** (File → Save as PDF), or `python -m scripts.export_deck_pdf` on Windows.
 3. Rehearse slides **8**, **10**, **11** using [`docs/JUDGE_QA.md`](JUDGE_QA.md).
 
 Regenerate starter deck after any retrain:
