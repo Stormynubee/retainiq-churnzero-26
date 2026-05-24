@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# Data — never commit raw or processed data
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Submission artifacts (we package these manually)
+submission/*.csv
+submission/*.zip
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Models / cache
+*.pkl
+*.joblib
+*.cbm
+*.lgb
+.cache/
+
+# Optuna
+optuna.db
+*.optuna.db
