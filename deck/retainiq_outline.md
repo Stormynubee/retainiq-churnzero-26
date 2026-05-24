@@ -4,7 +4,8 @@
 
 **Arc:** we predict churn, but the interesting part is *who to call* and *what it costs*.
 
-**Prep doc:** [`docs/JUDGE_QA.md`](../docs/JUDGE_QA.md) — demo script, Q&A, speaker split.
+**Prep doc:** [`docs/JUDGE_QA.md`](../docs/JUDGE_QA.md) — demo script, Q&A, speaker split.  
+**Full slide copy:** [`retainiq_slides_content.md`](retainiq_slides_content.md) · **Build:** [`PPT_BUILD.md`](PPT_BUILD.md) · `python -m scripts.build_deck_pptx`
 
 ## Speaker ownership
 

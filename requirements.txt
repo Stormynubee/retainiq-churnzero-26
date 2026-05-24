@@ -9,6 +9,8 @@ joblib>=1.3
 pyarrow>=15.0
 scipy>=1.11
 
+# deck generation (optional): pip install python-pptx>=1.0
+
 # notebook only
 jupyter>=1.0
 ipykernel>=6.29

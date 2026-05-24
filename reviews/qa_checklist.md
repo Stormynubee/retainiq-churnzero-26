@@ -33,6 +33,7 @@ Hansraj: ______  swayangjeet: ______
 - [ ] fairness numbers filled in (slide 12) — gender DP **0.031**, region **0.017**
 - [ ] ROI in rupees on slide 13 — **INR 137.5k**
 - [ ] spell-check + PDF export looks OK
+- [ ] polish starter PPTX from `python -m scripts.build_deck_pptx` (see `deck/PPT_BUILD.md`)
 - [ ] save as `deck/ChurnZero_RetainIQ_Presentation.pdf` and re-run `package_submission`
 
 Hansraj: ______  swayangjeet: ______

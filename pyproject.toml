@@ -28,6 +28,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-cov>=5.0"]
+deck = ["python-pptx>=1.0"]
 notebook = ["jupyter>=1.0", "ipykernel>=6.29"]
 
 [project.scripts]
