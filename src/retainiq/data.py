@@ -1,8 +1,7 @@
-"""IO + splits for the ChurnZero datasets."""
+"""Load CSVs and build stratified folds."""
 
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 
@@ -12,24 +11,22 @@ from . import config
 def load_train(path: Path | str = config.TRAIN_CSV) -> pd.DataFrame:
     df = pd.read_csv(path)
     if config.TARGET_COL not in df.columns:
-        raise ValueError(f"Train file missing target column {config.TARGET_COL!r}")
+        raise ValueError(f"missing {config.TARGET_COL}")
     if config.ID_COL not in df.columns:
-        raise ValueError(f"Train file missing id column {config.ID_COL!r}")
+        raise ValueError(f"missing {config.ID_COL}")
     return df
 
 
 def load_test(path: Path | str = config.TEST_CSV) -> pd.DataFrame:
     df = pd.read_csv(path)
     if config.TARGET_COL in df.columns:
-        raise ValueError("Test file unexpectedly contains the target column")
+        raise ValueError("test file should not have churn column")
     if config.ID_COL not in df.columns:
-        raise ValueError(f"Test file missing id column {config.ID_COL!r}")
+        raise ValueError(f"missing {config.ID_COL}")
     return df
 
 
 def split_features_target(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
-    """Drop id + target from X. Anything that touches the data later
-    fits on this X, so customer_id never enters an encoder."""
     y = df[config.TARGET_COL].astype(int)
     X = df.drop(columns=[config.TARGET_COL] + config.DROP_BEFORE_FEATURES)
     return X, y
@@ -44,7 +41,6 @@ def stratified_folds(
 
 
 def quick_stats(df: pd.DataFrame, target: str = config.TARGET_COL) -> dict:
-    """Tiny EDA summary used in the notebook and on slide 2."""
     out = {
         "rows": len(df),
         "cols": df.shape[1],

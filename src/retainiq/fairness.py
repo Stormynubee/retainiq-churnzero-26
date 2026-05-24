@@ -1,35 +1,13 @@
-"""Fairness audit — Layer 5 of RetainIQ.
-
-We compute two industry-standard fairness diagnostics across the
-sensitive attributes declared in `config.SENSITIVE_COLS`:
-
-    1. Demographic parity difference
-       max_g  P(yhat=1 | group=g)  -  min_g  P(yhat=1 | group=g)
-
-    2. Equal opportunity difference
-       max_g  TPR(group=g)  -  min_g  TPR(group=g)
-
-Both should be small (close to 0). Threshold of 0.10 is the common
-"4/5ths-style" rule of thumb from US-EEOC tradition; we report numbers
-and let the deck contextualize.
-
-Implementation note: we deliberately avoid `fairlearn` so the audit
-runs even on environments where fairlearn fails to install. If
-fairlearn is available, the same metrics line up with their API.
-"""
+"""Simple fairness tables on gender and region — no fairlearn dependency."""
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 
 from . import config
 
 
-def _per_group(
-    df: pd.DataFrame, group_col: str
-) -> pd.DataFrame:
-    """Helper: per-group counts of (yhat positive rate, TPR)."""
+def _per_group(df: pd.DataFrame, group_col: str) -> pd.DataFrame:
     rows = []
     for value, sub in df.groupby(group_col):
         n = len(sub)
@@ -59,11 +37,6 @@ def fairness_report(
     df_eval: pd.DataFrame,
     sensitive_cols: list[str] = config.SENSITIVE_COLS,
 ) -> dict:
-    """Return per-group + summary fairness metrics.
-
-    `df_eval` must contain columns: y_true, y_pred (0/1), and each col in
-    `sensitive_cols`. The function tolerates missing sensitive columns.
-    """
     per_group_frames: list[pd.DataFrame] = []
     summaries: list[dict] = []
 

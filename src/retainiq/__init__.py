@@ -1,3 +1,3 @@
-"""RetainIQ — causal, cost-aware churn retention engine."""
+"""RetainIQ churn pipeline for ChurnZero 26."""
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

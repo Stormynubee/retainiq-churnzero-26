@@ -1,9 +1,4 @@
-"""LightGBM + CatBoost stacked ensemble with isotonic calibration.
-
-We build OOF predictions across 5 stratified folds for both base learners,
-fit a logistic regression on the two-column OOF matrix, then calibrate the
-final probabilities via isotonic regression on the same OOF set.
-"""
+"""LightGBM + CatBoost stack with isotonic calibration."""
 
 from dataclasses import dataclass
 
@@ -18,7 +13,6 @@ from . import config
 
 @dataclass
 class StackedBundle:
-    """Everything `predict.py` needs to score a fresh test row."""
     lgb_models: list
     cat_models: list
     meta_model: LogisticRegression
@@ -33,7 +27,7 @@ def train_lightgbm_oof(
     splitter: StratifiedKFold,
     params: dict | None = None,
 ) -> tuple[np.ndarray, list]:
-    import lightgbm as lgb  # imported lazily; keeps config.py heavy-dep-free
+    import lightgbm as lgb
 
     pos_weight = (y == 0).sum() / max((y == 1).sum(), 1)
     base_params = {
@@ -56,11 +50,10 @@ def train_lightgbm_oof(
     oof = np.zeros(len(y))
     models: list = []
 
-    for fold_idx, (tr, va) in enumerate(splitter.split(X, y)):
+    for tr, va in splitter.split(X, y):
         X_tr, X_va = X.iloc[tr], X.iloc[va]
         y_tr, y_va = y.iloc[tr], y.iloc[va]
 
-        # LightGBM picks up category dtype automatically.
         train_set = lgb.Dataset(X_tr, label=y_tr, free_raw_data=False)
         val_set = lgb.Dataset(X_va, label=y_va, reference=train_set, free_raw_data=False)
 
@@ -105,13 +98,12 @@ def train_catboost_oof(
     oof = np.zeros(len(y))
     models: list = []
 
-    # CatBoost expects strings for categoricals, not pandas.Categorical.
     X_str = X.copy()
     for idx in cat_features:
         col = X.columns[idx]
         X_str[col] = X_str[col].astype(str)
 
-    for fold_idx, (tr, va) in enumerate(splitter.split(X_str, y)):
+    for tr, va in splitter.split(X_str, y):
         X_tr, X_va = X_str.iloc[tr], X_str.iloc[va]
         y_tr, y_va = y.iloc[tr], y.iloc[va]
 
@@ -149,7 +141,6 @@ def calibrate_isotonic(p_uncal: np.ndarray, y_true: pd.Series) -> IsotonicRegres
 
 
 def predict_stacked(bundle: StackedBundle, X_test: pd.DataFrame) -> np.ndarray:
-    """Score X_test through every fold model, then meta + isotonic."""
     X_test = X_test[bundle.feature_columns]
 
     lgb_preds = np.mean(

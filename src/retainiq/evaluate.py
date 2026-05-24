@@ -1,9 +1,8 @@
-"""Evaluation metrics — primary PR-AUC, secondary F1, plus the rupee cost."""
+"""PR-AUC, F1, and rupee cost at a given threshold."""
 
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
 from sklearn.metrics import (
     average_precision_score,
     confusion_matrix,
@@ -13,7 +12,6 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 
-from . import config
 from .threshold import expected_business_cost
 
 
@@ -22,7 +20,6 @@ def evaluate_at_threshold(
     y_proba: np.ndarray,
     threshold: float,
 ) -> dict:
-    """Full metric bundle at a given threshold."""
     y_hat = (np.asarray(y_proba) >= threshold).astype(int)
     y_true = np.asarray(y_true).astype(int)
 
@@ -45,12 +42,10 @@ def evaluate_at_threshold(
 
 
 def summarize(metrics: dict) -> str:
-    """One-line printable summary for logs / notebooks."""
     return (
         f"PR-AUC={metrics['pr_auc']:.4f} | "
         f"F1={metrics['f1']:.4f} | "
         f"P={metrics['precision']:.3f} | "
         f"R={metrics['recall']:.3f} | "
-        f"₹cost={metrics['total_cost_inr']:,.0f} "
-        f"@ t={metrics['threshold']:.4f}"
+        f"cost INR {metrics['total_cost_inr']:,.0f} @ t={metrics['threshold']:.4f}"
     )

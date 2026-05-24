@@ -1,24 +1,12 @@
-"""CLI entry point: score the test set and write submission CSV.
-
-Usage:
-    python -m scripts.predict
-"""
-
-from __future__ import annotations
+"""python -m scripts.predict"""
 
 import sys
 from pathlib import Path
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_PROJECT_ROOT / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from retainiq import pipeline  # noqa: E402
-
-
-def main() -> int:
-    pipeline.predict()
-    return 0
+from retainiq import pipeline
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    pipeline.predict()
