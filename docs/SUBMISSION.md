@@ -18,8 +18,8 @@ python -m scripts.pre_upload_check --require-pdf
 
 ## Deck (swayangjeet)
 
-1. Polish [`deck/ChurnZero_Team_Vortex_Presentation.pptx`](../deck/ChurnZero_Team_Vortex_Presentation.pptx) per [`deck/PPT_BUILD.md`](../deck/PPT_BUILD.md).
-2. Export **`deck/ChurnZero_Team_Vortex_Presentation.pdf`** (File → Save as PDF), or `python -m scripts.export_deck_pdf` on Windows.
+1. Polish [`deck/ChurnZero_TeamVortex_Presentation.pptx`](../deck/ChurnZero_TeamVortex_Presentation.pptx) per [`deck/PPT_BUILD.md`](../deck/PPT_BUILD.md).
+2. Export **`deck/ChurnZero_TeamVortex_Presentation.pdf`** (File → Save as PDF), or `python -m scripts.export_deck_pdf` on Windows.
 3. Rehearse slides **8**, **10**, **11** using [`docs/JUDGE_QA.md`](JUDGE_QA.md).
 
 Regenerate starter deck after any retrain:
@@ -35,11 +35,26 @@ python -m scripts.build_deck_pptx
 python -m scripts.package_submission --strict
 ```
 
-Unzip `submission/ChurnZero_Team_Vortex.zip` once and confirm:
+Unzip `ChurnZero_TeamVortex.zip` once and confirm **exactly three files** at the zip root:
 
-1. `ChurnZero_Team_Vortex_Predictions.csv` (2,026 rows)
-2. `ChurnZero_Team_Vortex_Presentation.pdf`
-3. `retainiq-code/` (src, scripts, README)
+1. `ChurnZero_TeamVortex_Predictions.csv` (2,026 rows)
+2. `ChurnZero_TeamVortex_Presentation.pptx` (or `.pdf` if you exported PDF)
+3. `ChurnZero_TeamVortex_Code.py`
+
+Build the zip:
+
+```powershell
+python -m scripts.package_submission
+```
+
+Or from your Downloads assets:
+
+```powershell
+python -m scripts.package_submission `
+  --csv "$env:USERPROFILE\Downloads\ChurnZero_TeamVortex_Predictions.csv" `
+  --deck "$env:USERPROFILE\Downloads\ChurnZero_TeamVortex_Presentation.pptx" `
+  --output "$env:USERPROFILE\Downloads\ChurnZero_TeamVortex.zip"
+```
 
 ## Upload
 

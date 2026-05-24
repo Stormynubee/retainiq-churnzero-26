@@ -11,13 +11,14 @@ SUBMISSION_DIR = PROJECT_ROOT / "submission"
 TRAIN_CSV = DATA_RAW / "ChurnZero_dataset_v1.csv"
 TEST_CSV = DATA_RAW / "ChurnZero_test_v1.csv"
 
-# Unstop team registration (filename slug: no spaces)
-TEAM_NAME = "Team_Vortex"
+# Unstop team registration (filename slug: no spaces/underscores)
+TEAM_NAME = "TeamVortex"
 TEAM_DISPLAY_NAME = "Team Vortex"
 # Project / deck product name (RetainIQ pipeline and slides)
 PRODUCT_NAME = "RetainIQ"
 
 SUBMISSION_CSV = SUBMISSION_DIR / f"ChurnZero_{TEAM_NAME}_Predictions.csv"
+CODE_SUBMISSION = PROJECT_ROOT / f"ChurnZero_{TEAM_NAME}_Code.py"
 SUBMISSION_ZIP = SUBMISSION_DIR / f"ChurnZero_{TEAM_NAME}.zip"
 DECK_PPTX = PROJECT_ROOT / "deck" / f"ChurnZero_{TEAM_NAME}_Presentation.pptx"
 DECK_PDF = PROJECT_ROOT / "deck" / f"ChurnZero_{TEAM_NAME}_Presentation.pdf"

@@ -20,20 +20,6 @@
 
 ---
 
-## Submission status
-
-| Item | Status |
-|---|---|
-| Predictions CSV | Ready — `submission/ChurnZero_Team_Vortex_Predictions.csv` (2,026 rows) |
-| Deck PDF | Ready — `deck/ChurnZero_Team_Vortex_Presentation.pdf` (`python -m scripts.export_deck_pdf` on Windows) |
-| ZIP | Ready — `submission/ChurnZero_Team_Vortex.zip` (`package_submission --strict`) |
-
-Pre-upload gate: `python -m scripts.pre_upload_check`
-
-**Reviewers:** [`docs/PROVENANCE.md`](docs/PROVENANCE.md) · [`docs/ITERATION.md`](docs/ITERATION.md) · [`docs/CAUSAL_FIXES.md`](docs/CAUSAL_FIXES.md) · [`CHANGELOG.md`](CHANGELOG.md)
-
----
-
 ## Reproduce the model (submission requirement)
 
 Judges require a **public GitHub repo** with a README that explains how to rebuild the model, plus a **test-set predictions CSV**. This repo satisfies both.
@@ -44,12 +30,28 @@ Judges require a **public GitHub repo** with a README that explains how to rebui
 
 | Requirement | Our file |
 |---|---|
-| Filename | `ChurnZero_Team_Vortex_Predictions.csv` (`ChurnZero_<TeamName>_Predictions.csv`, team **Team Vortex**) |
+| Filename | `ChurnZero_TeamVortex_Predictions.csv` (`ChurnZero_<TeamName>_Predictions.csv`, team **Team Vortex**) |
 | Rows | **2,026** (one per test `customer_id`) |
 | Columns | `customer_id`, `churn_prediction` (0 or 1), `churn_probability` (float in [0, 1]) |
 | Integrity | Same `customer_id` order as `data/raw/ChurnZero_test_v1.csv`; no nulls |
 
-Local path after `predict`: [`submission/ChurnZero_Team_Vortex_Predictions.csv`](submission/ChurnZero_Team_Vortex_Predictions.csv) (gitignored — generate locally; do not commit raw competition data).
+Local path after `predict`: [`submission/ChurnZero_TeamVortex_Predictions.csv`](submission/ChurnZero_TeamVortex_Predictions.csv) (gitignored — generate locally; do not commit raw competition data).
+
+### Code file (upload to Unstop)
+
+| Requirement | Our file |
+|---|---|
+| Filename | [`ChurnZero_TeamVortex_Code.py`](ChurnZero_TeamVortex_Code.py) (`ChurnZero_<TeamName>_Code`) |
+| Format | Python script (`.py` accepted); runs **end-to-end** |
+
+One command retrains and writes the predictions CSV:
+
+```powershell
+pip install -e .
+python ChurnZero_TeamVortex_Code.py
+```
+
+Exploratory narrative (after training): [`notebooks/retainiq_story.py`](notebooks/retainiq_story.py).
 
 ### Steps to reproduce from scratch
 
@@ -75,7 +77,7 @@ python -m scripts.predict
 python -m scripts.validate_submission
 ```
 
-`predict` loads the saved bundle and writes `submission/ChurnZero_Team_Vortex_Predictions.csv`:
+`predict` loads the saved bundle and writes `submission/ChurnZero_TeamVortex_Predictions.csv`:
 - `churn_probability` — rank blend of base models (leaderboard / PR-AUC column)
 - `churn_prediction` — calibrated stack at rupee-optimal threshold (~0.002)
 
@@ -93,6 +95,8 @@ python -m scripts.pre_upload_check
 ```
 
 Methodology and leakage fixes: [`docs/CAUSAL_FIXES.md`](docs/CAUSAL_FIXES.md) · tests: `tests/test_causal_leakage.py`, `tests/test_stacking_train.py`.
+
+More for reviewers: [`docs/PROVENANCE.md`](docs/PROVENANCE.md) · [`docs/ITERATION.md`](docs/ITERATION.md) · [`CHANGELOG.md`](CHANGELOG.md)
 
 ---
 
@@ -225,7 +229,7 @@ CI runs unit + smoke tests on every push to `main`.
 
 | Output | Description |
 |---|---|
-| `submission/ChurnZero_Team_Vortex_Predictions.csv` | 2,026-row submission |
+| `submission/ChurnZero_TeamVortex_Predictions.csv` | 2,026-row submission |
 | `data/processed/training_metrics.json` | OOF PR-AUC, F1, cost @ optimal vs 0.5 |
 | `data/processed/rank_stack_weights.json` | OOF-tuned rank blend weights |
 | `data/processed/cost_curve.csv` | threshold sweep for deck slide 8 |
