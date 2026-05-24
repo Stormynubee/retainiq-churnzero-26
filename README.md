@@ -1,108 +1,155 @@
-# RetainIQ — ChurnZero 26
+<p align="center">
+  <img src="docs/assets/banner.svg" width="800" alt="RetainIQ — Cost-Aware Churn Retention Engine" />
+</p>
 
-**Hansraj Tiwari** (model) · **swayangjeet nayak** (deck & story)  
-IIT Kharagpur · [ChurnZero 26 on Unstop](https://unstop.com/competitions/churnzero-26-iit-kharagpur-1686181)
+<p align="center">
+  <a href="https://github.com/Stormynubee/retainiq-churnzero-26/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/Stormynubee/retainiq-churnzero-26/test.yml?branch=main&style=for-the-badge&label=CI" alt="CI" /></a>
+  <a href="https://unstop.com/competitions/churnzero-26-iit-kharagpur-1686181"><img src="https://img.shields.io/badge/ChurnZero%2026-IIT%20Kharagpur-6366F1?style=for-the-badge" alt="ChurnZero 26" /></a>
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/PR--AUC-0.9999-22C55E?style=for-the-badge" alt="PR-AUC" />
+</p>
 
-Round 2 submission for banking churn prediction. The rubric wants a model *and* a retention strategy — we tried to do both properly instead of just chasing AUC.
-
----
-
-## The short version
-
-Most teams will hit PR-AUC ≈ 0.99 on this dataset. It's very separable. Where we think we can stand out:
-
-1. **Cost-aware threshold** — FN costs ₹40,000, FP costs ₹500. We sweep thresholds and pick the one that minimises rupee cost, not the default 0.5.
-2. **Uplift modelling** — `retention_offer_received` is in the data, so we ran a T-learner. Turns out only 4 customers look genuinely persuadable, and 141 look like "sleeping dogs" (calling them may *increase* churn).
-3. **Fairness check** — gender and region both pass a simple 10% parity rule at our operating threshold.
-
-Model stack: LightGBM + CatBoost → logistic stacker → isotonic calibration. Nothing exotic, just wired together cleanly and reproducible.
+<p align="center">
+  <b>RetainIQ</b> — Round 2 submission for banking churn prediction at ChurnZero 26.<br/>
+  Stacked ensemble + cost-optimal threshold + uplift segmentation + fairness audit.<br/>
+  Built by <b>Hansraj Tiwari</b> (ML) & <b>swayangjeet nayak</b> (deck & strategy).
+</p>
 
 ---
 
-## Run it
+## Why RetainIQ
 
-Needs Python 3.11+ (we tested on 3.14 too).
+Most teams will hit PR-AUC ≈ 0.99 on this dataset — it's very separable. We focused on what judges actually care about beyond the scoreboard:
+
+| Layer | What it does | Headline result |
+|---|---|---|
+| **Prediction** | LightGBM + CatBoost → logistic stacker → isotonic calibration | PR-AUC **0.9999** (5-fold OOF) |
+| **Threshold** | Sweep thresholds; minimise rupee cost (FN ₹40k, FP ₹500) | **₹62,500** vs ₹200,500 @ t=0.5 — **~69% savings** |
+| **Uplift** | T-learner on `retention_offer_received` | **4** persuadables, **141** sleeping dogs |
+| **Fairness** | Demographic parity on gender & region @ operating threshold | Both under **10%** parity gap |
+
+> The model is saturated. The business story is in the threshold, uplift, and retention playbook — not another 0.001 AUC bump.
+
+---
+
+## Results at a glance
+
+| Metric | Cost-optimal (t ≈ 0.001) | Naive (t = 0.5) |
+|---|---|---|
+| PR-AUC | 0.9999 | 0.9999 |
+| Recall | 100% | 99.6% |
+| F1 | 0.9542 | 0.9977 |
+| **Business cost** | **₹62,500** | ₹200,500 |
+
+Train: 8,101 customers · 16.07% churn · Test submission: 2,026 rows · 17.47% positive rate.
+
+---
+
+## Visuals
+
+<p align="center">
+  <img src="deck/charts/08_cost_curve.png" width="420" alt="Cost curve vs threshold" />
+  &nbsp;
+  <img src="deck/charts/10_uplift_quadrant.png" width="420" alt="Uplift quadrant" />
+</p>
+
+<p align="center">
+  <img src="deck/charts/09_feature_importance.png" width="420" alt="Feature importance" />
+  &nbsp;
+  <img src="deck/charts/12_fairness.png" width="420" alt="Fairness audit" />
+</p>
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  A[Raw CSVs] --> B[Feature Engineering]
+  B --> C[LightGBM OOF]
+  B --> D[CatBoost OOF]
+  C --> E[Logistic Stacker]
+  D --> E
+  E --> F[Isotonic Calibration]
+  F --> G[Cost Threshold Sweep]
+  F --> H[Submission CSV]
+  F --> I[T-Learner Uplift]
+  F --> J[Fairness Audit]
+  G --> K[Deck Charts]
+  I --> K
+  J --> K
+```
+
+```
+src/retainiq/     data, features, models, threshold, uplift, fairness
+scripts/          train · predict · build_artifacts · audit_features
+notebooks/        narrative walkthrough for judges
+deck/             slide outline + chart PNGs
+tests/            pytest unit + integration suite
+```
+
+---
+
+## Quick start
+
+Requires Python 3.11+. Drop competition CSVs into `data/raw/` (not included — see disclaimer below).
 
 ```powershell
 pip install -r requirements.txt
 
-python -m scripts.train            # ~4 min, writes models + metrics
+python -m scripts.train            # ~4 min — models + metrics
 python -m scripts.predict          # submission CSV
 python -m scripts.build_artifacts  # uplift, fairness, deck charts
 python -m scripts.audit_features   # optional leakage sanity check
 ```
 
-## Tests
+### Tests
 
 ```powershell
 pip install -r requirements-dev.txt
-pytest -m "not slow and not integration"    # fast unit tests (~10s)
-pytest -m integration                       # needs data/raw CSVs
-pytest                                      # everything including slow predict smoke
+python -m pytest -m "not slow and not integration"   # fast unit tests (~10s)
+python -m pytest -m integration                    # needs data/raw CSVs
+python -m pytest                                     # full suite
 ```
 
-CI runs unit tests on every push to `main` (see `.github/workflows/test.yml`).
+CI runs unit tests on every push to `main`.
 
-On Windows PowerShell, if rupee symbols print weird:
-
-```powershell
-$env:PYTHONIOENCODING = "utf-8"
-```
-
-**Outputs you'll care about:**
-
-| File | What |
+| Output | Description |
 |---|---|
 | `submission/ChurnZero_RetainIQ_Predictions.csv` | 2,026-row submission |
 | `data/processed/training_metrics.json` | OOF PR-AUC, F1, cost @ optimal vs 0.5 |
-| `data/processed/cost_curve.csv` | threshold sweep for slide 8 |
-| `deck/charts/*.png` | cost curve, feature importance, uplift plot, fairness |
+| `data/processed/cost_curve.csv` | threshold sweep for deck slide 8 |
+| `deck/charts/*.png` | cost curve, importance, uplift, fairness |
 
-The narrative walkthrough lives in `notebooks/retainiq_story.py` (Jupytext-style — open in VS Code or Jupyter).
-
----
-
-## Repo layout
-
-```
-src/retainiq/     core code (data, features, models, threshold, uplift, fairness)
-scripts/          train, predict, build_artifacts, audit_features
-notebooks/        story notebook for judges
-deck/             slide outline + chart PNGs
-docs/             run notes + design notes
-reviews/          pre-submit QA checklist
-submission/       final CSV (gitignored until we zip it)
-data/raw/         competition CSVs (gitignored — drop them in locally)
-data/processed/   joblib bundles, metrics (gitignored, regenerated by train)
-```
+On Windows PowerShell, if rupee symbols print garbled: `$env:PYTHONIOENCODING = "utf-8"`
 
 ---
 
-## Who owns what
+## Team
 
 | Person | Role | Directories |
 |---|---|---|
-| Hansraj Tiwari | model, CSV, reproducibility | `src/`, `scripts/`, `notebooks/` |
-| swayangjeet nayak | deck, business case, QA, ZIP | `deck/`, `reviews/`, `submission/` |
-
-Quick daily sync: Hansraj posts latest OOF PR-AUC / cost numbers, swayangjeet posts slide draft. Commit to `main` when something actually changed.
+| **Hansraj Tiwari** | model, CSV, reproducibility | `src/`, `scripts/`, `notebooks/` |
+| **swayangjeet nayak** | deck, business case, QA, ZIP | `deck/`, `reviews/`, `submission/` |
 
 ---
 
-## Things worth knowing before you edit code
+## Config reference
 
-- Primary metric is **PR-AUC**, not ROC-AUC.
-- Cost constants live in `src/retainiq/config.py` (`FN_COST=40000`, `FP_COST=500`).
-- `customer_id` never goes into the model.
-- Feature engineering fits on train only; test uses the saved `fe_state.joblib`.
-- Seed is 42 everywhere. Runs should be deterministic.
+- Primary metric: **PR-AUC** (not ROC-AUC)
+- Cost constants: `FN_COST=40000`, `FP_COST=500` in `src/retainiq/config.py`
+- `customer_id` never enters the model
+- Feature engineering fits on train only; test uses saved `fe_state.joblib`
+- Seed **42** everywhere — runs are deterministic
 
-More numbers and deck copy-paste values: `docs/RUN_NOTES.md`.
+Full numbers and slide copy-paste values: [`docs/RUN_NOTES.md`](docs/RUN_NOTES.md)
 
 ---
 
-## GitHub
+## Disclaimer
 
-https://github.com/Stormynubee/retainiq-churnzero-26
+Educational hackathon submission for [ChurnZero 26](https://unstop.com/competitions/churnzero-26-iit-kharagpur-1686181). Competition datasets are **not** redistributed — obtain them from the official portal. Please do not commit raw CSVs to forks.
 
-Educational submission — please don't redistribute the competition data.
+<p align="center">
+  <a href="https://github.com/Stormynubee/retainiq-churnzero-26"><b>github.com/Stormynubee/retainiq-churnzero-26</b></a>
+</p>
