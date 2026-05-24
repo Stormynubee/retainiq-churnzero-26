@@ -13,7 +13,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 **On-slide title:** RetainIQ — Who to call, and what it costs
 
 **Bullets:**
-- Hansraj Tiwari & swayangjeet nayak
+- Team Vortex — Hansraj Tiwari & swayangjeet nayak
 - ChurnZero 26 · IIT Kharagpur
 
 **Visual:** none (title slide)

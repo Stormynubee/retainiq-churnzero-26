@@ -1,6 +1,6 @@
 # Unstop upload checklist
 
-Hansraj Tiwari & swayangjeet nayak · ChurnZero 26 · RetainIQ
+Hansraj Tiwari & swayangjeet nayak · ChurnZero 26 · **Team Vortex** · RetainIQ
 
 ## Before you zip
 
@@ -18,8 +18,8 @@ python -m scripts.pre_upload_check --require-pdf
 
 ## Deck (swayangjeet)
 
-1. Polish [`deck/ChurnZero_RetainIQ_Presentation.pptx`](../deck/ChurnZero_RetainIQ_Presentation.pptx) per [`deck/PPT_BUILD.md`](../deck/PPT_BUILD.md).
-2. Export **`deck/ChurnZero_RetainIQ_Presentation.pdf`** (File → Save as PDF), or `python -m scripts.export_deck_pdf` on Windows.
+1. Polish [`deck/ChurnZero_Team_Vortex_Presentation.pptx`](../deck/ChurnZero_Team_Vortex_Presentation.pptx) per [`deck/PPT_BUILD.md`](../deck/PPT_BUILD.md).
+2. Export **`deck/ChurnZero_Team_Vortex_Presentation.pdf`** (File → Save as PDF), or `python -m scripts.export_deck_pdf` on Windows.
 3. Rehearse slides **8**, **10**, **11** using [`docs/JUDGE_QA.md`](JUDGE_QA.md).
 
 Regenerate starter deck after any retrain:
@@ -35,10 +35,10 @@ python -m scripts.build_deck_pptx
 python -m scripts.package_submission --strict
 ```
 
-Unzip `submission/ChurnZero_RetainIQ.zip` once and confirm:
+Unzip `submission/ChurnZero_Team_Vortex.zip` once and confirm:
 
-1. `ChurnZero_RetainIQ_Predictions.csv` (2,026 rows)
-2. `ChurnZero_RetainIQ_Presentation.pdf`
+1. `ChurnZero_Team_Vortex_Predictions.csv` (2,026 rows)
+2. `ChurnZero_Team_Vortex_Presentation.pdf`
 3. `retainiq-code/` (src, scripts, README)
 
 ## Upload

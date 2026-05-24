@@ -8,6 +8,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from retainiq import config
 
 
 def main() -> None:
@@ -15,7 +18,7 @@ def main() -> None:
     parser.add_argument(
         "--require-pdf",
         action="store_true",
-        help="Fail if deck/ChurnZero_RetainIQ_Presentation.pdf is missing",
+        help=f"Fail if {config.DECK_PDF.name} is missing",
     )
     args = parser.parse_args()
 
@@ -39,9 +42,9 @@ def main() -> None:
     if not (ROOT / "data/processed/training_metrics.json").is_file():
         errors.append("missing data/processed/training_metrics.json — run train")
 
-    pdf = ROOT / "deck/ChurnZero_RetainIQ_Presentation.pdf"
+    pdf = config.DECK_PDF
     if not pdf.is_file():
-        msg = "missing deck/ChurnZero_RetainIQ_Presentation.pdf — export before final ZIP"
+        msg = f"missing {pdf} — export before final ZIP"
         if args.require_pdf:
             errors.append(msg)
         else:

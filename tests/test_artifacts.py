@@ -44,4 +44,4 @@ def test_write_manifest(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "DATA_PROCESSED", tmp_path)
     out = artifacts.write_manifest({"optimal_threshold": 0.01})
     assert out.is_file()
-    assert "RetainIQ" in out.read_text()
+    assert config.TEAM_NAME in out.read_text()

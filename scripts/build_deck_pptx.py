@@ -18,7 +18,7 @@ from retainiq import config
 from retainiq.deck_metrics import DeckMetrics, load_deck_metrics
 
 CHARTS = ROOT / "deck" / "charts"
-DEFAULT_OUT = ROOT / "deck" / "ChurnZero_RetainIQ_Presentation.pptx"
+DEFAULT_OUT = config.DECK_PPTX
 
 SLIDE_W = Inches(13.333)
 SLIDE_H = Inches(7.5)
@@ -52,7 +52,7 @@ def _slides_spec(m: DeckMetrics) -> list[dict[str, Any]]:
         {
             "title": "RetainIQ — Who to call, and what it costs",
             "bullets": [
-                "Hansraj Tiwari & swayangjeet nayak",
+                "Team Vortex — Hansraj Tiwari & swayangjeet nayak",
                 "ChurnZero 26 · IIT Kharagpur",
             ],
         },

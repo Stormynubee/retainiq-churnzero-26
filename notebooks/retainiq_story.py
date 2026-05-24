@@ -128,7 +128,7 @@ pd.DataFrame(
 # ## 8. Submission check
 
 # %%
-sub = pd.read_csv(PROJECT / "submission" / "ChurnZero_RetainIQ_Predictions.csv")
+sub = pd.read_csv(PROJECT / "submission" / "ChurnZero_Team_Vortex_Predictions.csv")
 print(len(sub), "rows, positive rate", sub["churn_prediction"].mean())
 sub.head()
 

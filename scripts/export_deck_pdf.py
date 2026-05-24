@@ -7,8 +7,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PPTX = ROOT / "deck" / "ChurnZero_RetainIQ_Presentation.pptx"
-PDF = ROOT / "deck" / "ChurnZero_RetainIQ_Presentation.pdf"
+sys.path.insert(0, str(ROOT / "src"))
+
+from retainiq import config
+
+PPTX = config.DECK_PPTX
+PDF = config.DECK_PDF
 
 
 def main() -> None:

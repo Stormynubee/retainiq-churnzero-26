@@ -1,29 +1,28 @@
-"""Build ChurnZero_RetainIQ.zip for Unstop upload."""
+"""Build ChurnZero_<TeamName>.zip for Unstop upload."""
 
 from __future__ import annotations
 
 import argparse
 import shutil
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ZIP_NAME = "ChurnZero_RetainIQ.zip"
-OUT = ROOT / "submission" / ZIP_NAME
-REQUIRED = [
-    ROOT / "submission" / "ChurnZero_RetainIQ_Predictions.csv",
-]
-OPTIONAL_DECK = [
-    ROOT / "deck" / "ChurnZero_RetainIQ_Presentation.pdf",
-    ROOT / "deck" / "ChurnZero_RetainIQ_Presentation.pptx",
-]
+sys.path.insert(0, str(ROOT / "src"))
+
+from retainiq import config
+
+OUT = config.SUBMISSION_ZIP
+REQUIRED = [config.SUBMISSION_CSV]
+OPTIONAL_DECK = [config.DECK_PDF, config.DECK_PPTX]
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build ChurnZero_RetainIQ.zip")
+    parser = argparse.ArgumentParser(description=f"Build {OUT.name}")
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Require deck/ChurnZero_RetainIQ_Presentation.pdf",
+        help=f"Require {config.DECK_PDF.name}",
     )
     args = parser.parse_args()
 
@@ -31,9 +30,9 @@ def main() -> None:
     if missing:
         raise SystemExit("Missing: " + ", ".join(p.name for p in missing))
 
-    pdf = ROOT / "deck" / "ChurnZero_RetainIQ_Presentation.pdf"
+    pdf = config.DECK_PDF
     if args.strict and not pdf.is_file():
-        raise SystemExit("Missing deck/ChurnZero_RetainIQ_Presentation.pdf (export PDF first)")
+        raise SystemExit(f"Missing {pdf} (export PDF first)")
 
     staging = ROOT / "submission" / "_zip_staging"
     if staging.exists():

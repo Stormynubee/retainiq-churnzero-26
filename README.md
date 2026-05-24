@@ -11,7 +11,7 @@
 <p align="center">
   <b>RetainIQ</b> — Round 2 submission for banking churn prediction at ChurnZero 26.<br/>
   Cost-optimal threshold + dual-track CSV + IPTW uplift + fairness audit (OOF stacking underneath).<br/>
-  Built by <b>Hansraj Tiwari</b> (ML) & <b>swayangjeet nayak</b> (deck & strategy).
+  <b>Team Vortex</b> — Hansraj Tiwari (ML) & swayangjeet nayak (deck & strategy).
 </p>
 
 <p align="center">
@@ -24,9 +24,9 @@
 
 | Item | Status |
 |---|---|
-| Predictions CSV | Ready — `submission/ChurnZero_RetainIQ_Predictions.csv` (2,026 rows) |
-| Deck PDF | Ready — `deck/ChurnZero_RetainIQ_Presentation.pdf` (`python -m scripts.export_deck_pdf` on Windows) |
-| ZIP | Ready — `submission/ChurnZero_RetainIQ.zip` (`package_submission --strict`) |
+| Predictions CSV | Ready — `submission/ChurnZero_Team_Vortex_Predictions.csv` (2,026 rows) |
+| Deck PDF | Ready — `deck/ChurnZero_Team_Vortex_Presentation.pdf` (`python -m scripts.export_deck_pdf` on Windows) |
+| ZIP | Ready — `submission/ChurnZero_Team_Vortex.zip` (`package_submission --strict`) |
 
 Pre-upload gate: `python -m scripts.pre_upload_check`
 
@@ -44,12 +44,12 @@ Judges require a **public GitHub repo** with a README that explains how to rebui
 
 | Requirement | Our file |
 |---|---|
-| Filename | `ChurnZero_RetainIQ_Predictions.csv` (`ChurnZero_<TeamName>_Predictions.csv`) |
+| Filename | `ChurnZero_Team_Vortex_Predictions.csv` (`ChurnZero_<TeamName>_Predictions.csv`, team **Team Vortex**) |
 | Rows | **2,026** (one per test `customer_id`) |
 | Columns | `customer_id`, `churn_prediction` (0 or 1), `churn_probability` (float in [0, 1]) |
 | Integrity | Same `customer_id` order as `data/raw/ChurnZero_test_v1.csv`; no nulls |
 
-Local path after `predict`: [`submission/ChurnZero_RetainIQ_Predictions.csv`](submission/ChurnZero_RetainIQ_Predictions.csv) (gitignored — generate locally; do not commit raw competition data).
+Local path after `predict`: [`submission/ChurnZero_Team_Vortex_Predictions.csv`](submission/ChurnZero_Team_Vortex_Predictions.csv) (gitignored — generate locally; do not commit raw competition data).
 
 ### Steps to reproduce from scratch
 
@@ -75,7 +75,7 @@ python -m scripts.predict
 python -m scripts.validate_submission
 ```
 
-`predict` loads the saved bundle and writes `submission/ChurnZero_RetainIQ_Predictions.csv`:
+`predict` loads the saved bundle and writes `submission/ChurnZero_Team_Vortex_Predictions.csv`:
 - `churn_probability` — rank blend of base models (leaderboard / PR-AUC column)
 - `churn_prediction` — calibrated stack at rupee-optimal threshold (~0.002)
 
@@ -225,7 +225,7 @@ CI runs unit + smoke tests on every push to `main`.
 
 | Output | Description |
 |---|---|
-| `submission/ChurnZero_RetainIQ_Predictions.csv` | 2,026-row submission |
+| `submission/ChurnZero_Team_Vortex_Predictions.csv` | 2,026-row submission |
 | `data/processed/training_metrics.json` | OOF PR-AUC, F1, cost @ optimal vs 0.5 |
 | `data/processed/rank_stack_weights.json` | OOF-tuned rank blend weights |
 | `data/processed/cost_curve.csv` | threshold sweep for deck slide 8 |
