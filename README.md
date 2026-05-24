@@ -20,40 +20,7 @@
 
 ---
 
-## Reproduce the model (submission requirement)
-
-Judges require a **public GitHub repo** with a README that explains how to rebuild the model, plus a **test-set predictions CSV**. This repo satisfies both.
-
-**Repository:** [github.com/Stormynubee/retainiq-churnzero-26](https://github.com/Stormynubee/retainiq-churnzero-26)
-
-### Predictions file (upload to Unstop)
-
-| Requirement | Our file |
-|---|---|
-| Filename | `ChurnZero_TeamVortex_Predictions.csv` (`ChurnZero_<TeamName>_Predictions.csv`, team **Team Vortex**) |
-| Rows | **2,026** (one per test `customer_id`) |
-| Columns | `customer_id`, `churn_prediction` (0 or 1), `churn_probability` (float in [0, 1]) |
-| Integrity | Same `customer_id` order as `data/raw/ChurnZero_test_v1.csv`; no nulls |
-
-Local path after `predict`: [`submission/ChurnZero_TeamVortex_Predictions.csv`](submission/ChurnZero_TeamVortex_Predictions.csv) (gitignored — generate locally; do not commit raw competition data).
-
-### Code file (upload to Unstop)
-
-| Requirement | Our file |
-|---|---|
-| Filename | [`ChurnZero_TeamVortex_Code.py`](ChurnZero_TeamVortex_Code.py) (`ChurnZero_<TeamName>_Code`) |
-| Format | Python script (`.py` accepted); runs **end-to-end** |
-
-One command retrains and writes the predictions CSV:
-
-```powershell
-pip install -e .
-python ChurnZero_TeamVortex_Code.py
-```
-
-Exploratory narrative (after training): [`notebooks/retainiq_story.py`](notebooks/retainiq_story.py).
-
-### Steps to reproduce from scratch
+## Reproduce the model
 
 1. **Python 3.11+** and competition CSVs in `data/raw/` ([`data/README.md`](data/README.md)):
    - `ChurnZero_dataset_v1.csv` (8,101 train rows)
