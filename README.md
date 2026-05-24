@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/banner.svg" width="800" alt="RetainIQ — Cost-Aware Churn Retention Engine" />
+  <img src="docs/assets/banner.png" width="800" alt="RetainIQ — Cost-Aware Churn Retention Engine" />
 </p>
 
 <p align="center">
