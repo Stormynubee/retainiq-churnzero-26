@@ -2,34 +2,34 @@
 
 Canonical numbers from OOF evaluation on **8,101** training customers (seed 42, 5-fold CV). Regenerate with `python -m scripts.train`.
 
-**Finalist push (2026-05-24):** After re-train, check `artifacts_manifest.json` for `pr_auc_rank_oof` and `rank_stack_weights`. Submission uses rank probabilities for the leaderboard column and calibrated probabilities for the cost-optimal binary column.
+**Finalist push:** Rank probabilities for `churn_probability` (LGB 0.4 / Cat 0.6); calibrated stack + cost threshold for `churn_prediction`. See `data/processed/artifacts_manifest.json`.
 
 ## Model performance
 
-| Metric | Cost-optimal (t ≈ 0.001) | Naive (t = 0.5) |
+| Metric | Cost-optimal (t = 0.002) | Naive (t = 0.5) |
 |---|---|---|
 | PR-AUC | 0.9999 | 0.9999 |
-| Recall | 100% | 99.6% |
-| F1 | 0.9542 | 0.9977 |
-| **Business cost (INR)** | **62,500** | 200,500 |
+| Recall | 99.9% | 99.6% |
+| F1 | 0.9808 | 0.9962 |
+| **Business cost (INR)** | **65,000** | 202,500 |
 
-**Savings:** ₹138,000 (~69%) vs default threshold on training set.
+**Savings:** ₹137,500 (~67.9%) vs default threshold on training set.
 
-## Uplift (T-learner on `retention_offer_received`)
+## Uplift (IPTW T-learner on `retention_offer_received`)
 
 | Segment | Count | Avg CATE |
 |---|---:|---:|
-| sure-thing | 6,707 | ~0 |
-| lost-cause | 1,248 | ~0 |
-| sleeping-dog | 141 | **−0.27** |
-| persuadable | 4 | **+0.37** |
+| sure-thing | 6,755 | ~0 |
+| lost-cause | 1,250 | ~0 |
+| sleeping-dog | 90 | **−0.30** |
+| persuadable | 6 | **+0.40** |
 
-## Fairness @ operating threshold
+## Fairness @ operating threshold (t = 0.002)
 
 | Attribute | Demographic parity gap | Equal opportunity gap |
 |---|---:|---:|
-| gender | 0.027 | 0.000 |
-| region | 0.013 | 0.000 |
+| gender | 0.031 | 0.001 |
+| region | 0.017 | 0.003 |
 
 ## Top features (LightGBM gain)
 
@@ -41,7 +41,9 @@ Ablation: dropping #1 still yields PR-AUC **0.9996** — strong signal, not leak
 
 ## Test submission
 
-- **2,026** rows · positive rate **17.47%** (train churn 16.07%)
+- **2,026** rows · positive rate **16.63%** (train churn 16.07%)
+
+Validate before upload: `python -m scripts.validate_submission`
 
 ## Limitations
 

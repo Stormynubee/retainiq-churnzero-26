@@ -73,11 +73,11 @@ logistic baseline → single LGB → stack → calibrated.
 
 Copy from `docs/RUN_NOTES.md`:
 
-| | t = 0.001 | t = 0.5 |
+| | t = 0.002 | t = 0.5 |
 |---|---|---|
 | PR-AUC | 0.9999 | 0.9999 |
-| Recall | 100% | 99.6% |
-| Cost | INR 62,500 | INR 200,500 |
+| Recall | 99.9% | 99.6% |
+| Cost | INR 65,000 | INR 202,500 |
 
 Lead with PR-AUC as primary metric per rubric.
 
@@ -89,8 +89,8 @@ Lead with PR-AUC as primary metric per rubric.
 
 PNG: `deck/charts/08_cost_curve.png`
 
-- Vertical line at 0.5 vs our threshold (~0.001)
-- Caption: same model, **INR 138k saved** on 8,101 customers vs naive cutoff
+- Vertical line at 0.5 vs our threshold (**0.002**)
+- Caption: same model, **INR 137.5k saved** (~68%) on 8,101 customers vs naive cutoff
 
 Pause here — judges asked for business cost.
 
@@ -117,7 +117,7 @@ PNG: `deck/charts/10_uplift_quadrant.png`
 | Lost-cause | Don't waste budget |
 | Sleeping-dog | **Do not call** — CATE negative |
 
-Numbers: **4** persuadables, **141** sleeping-dogs (from run notes).
+Numbers: **6** persuadables, **90** sleeping-dogs (from `uplift_segmentation.csv`).
 
 Caveat: offers weren't randomised — say that out loud.  
 Method: propensity scores clipped to [0.05, 0.95], overlap trim, IPTW-weighted T-learner (`uplift_propensity_summary.json` for n trimmed).
@@ -138,8 +138,8 @@ PNG: `deck/charts/12_fairness.png`
 
 | | DP diff | EO diff |
 |---|---|---|
-| Gender | 0.027 | 0.000 |
-| Region | 0.013 | 0.000 |
+| Gender | 0.031 | 0.001 |
+| Region | 0.017 | 0.003 |
 
 ---
 
@@ -152,7 +152,7 @@ PNG: `deck/charts/12_fairness.png`
 | Lost-cause | Graceful exit, re-engage later |
 | Sure-thing | Cross-sell instead |
 
-ROI line: **INR 138k saved** on training cohort (scale to per-1L customers if asked).
+ROI line: **INR 137.5k saved** on training cohort (scale to per-1L customers if asked).
 
 ---
 

@@ -18,6 +18,8 @@ pip install -e ".[dev]"
 | `python -m scripts.build_artifacts` | Deck charts (after train) |
 | `python -m scripts.audit_features` | Optional ablation audit |
 | `python -m scripts.predict` | Submission CSV |
+| `python -m scripts.validate_submission` | Pre-upload CSV checks |
+| `python -m scripts.package_submission` | Build `submission/ChurnZero_RetainIQ.zip` |
 
 ## Test markers
 

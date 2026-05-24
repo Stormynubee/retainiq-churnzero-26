@@ -26,8 +26,8 @@ Most teams will hit PR-AUC ≈ 0.99 on this dataset — it's very separable. We 
 |---|---|---|
 | **Prediction** | LightGBM + CatBoost OOF → meta on OOF → **Platt calibration** | PR-AUC **0.9999** (5-fold OOF) |
 | **Submission** | Rank blend → `churn_probability`; calibrated stack → `churn_prediction` @ cost threshold | Leaderboard column + rupee-optimal binary |
-| **Threshold** | Sweep thresholds; minimise rupee cost (FN ₹40k, FP ₹500) | **₹62,500** vs ₹200,500 @ t=0.5 — **~69% savings** |
-| **Uplift** | IPTW T-learner on `retention_offer_received` (overlap trim) | **4** persuadables, **141** sleeping dogs |
+| **Threshold** | Sweep thresholds; minimise rupee cost (FN ₹40k, FP ₹500) | **₹65,000** vs ₹202,500 @ t=0.5 — **~68% savings** |
+| **Uplift** | IPTW T-learner on `retention_offer_received` (overlap trim) | **6** persuadables, **90** sleeping dogs |
 | **Fairness** | Demographic parity on gender & region @ operating threshold | Both under **10%** parity gap |
 
 > The model is saturated. The business story is in the threshold, uplift, and retention playbook — not another 0.001 AUC bump.
@@ -38,14 +38,14 @@ Methodology notes: [`docs/CAUSAL_FIXES.md`](docs/CAUSAL_FIXES.md)
 
 ## Results at a glance
 
-| Metric | Cost-optimal (t ≈ 0.001) | Naive (t = 0.5) |
+| Metric | Cost-optimal (t = 0.002) | Naive (t = 0.5) |
 |---|---|---|
 | PR-AUC | 0.9999 | 0.9999 |
-| Recall | 100% | 99.6% |
-| F1 | 0.9542 | 0.9977 |
-| **Business cost** | **₹62,500** | ₹200,500 |
+| Recall | 99.9% | 99.6% |
+| F1 | 0.9808 | 0.9962 |
+| **Business cost** | **₹65,000** | ₹202,500 |
 
-Train: 8,101 customers · 16.07% churn · Test submission: 2,026 rows · 17.47% positive rate.
+Train: 8,101 customers · 16.07% churn · Test submission: 2,026 rows · 16.63% positive rate.
 
 ---
 
@@ -133,6 +133,8 @@ python -m scripts.train            # ~4 min — models + metrics + importances
 python -m scripts.build_artifacts  # uplift, fairness, deck charts
 python -m scripts.audit_features   # optional top-feature ablation
 python -m scripts.predict          # submission CSV
+python -m scripts.validate_submission  # pre-upload checks
+python -m scripts.package_submission   # ChurnZero_RetainIQ.zip
 ```
 
 ### Tests
