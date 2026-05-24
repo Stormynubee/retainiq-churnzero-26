@@ -32,6 +32,17 @@ python -m scripts.build_artifacts  # uplift, fairness, deck charts
 python -m scripts.audit_features   # optional leakage sanity check
 ```
 
+## Tests
+
+```powershell
+pip install -r requirements-dev.txt
+pytest -m "not slow and not integration"    # fast unit tests (~10s)
+pytest -m integration                       # needs data/raw CSVs
+pytest                                      # everything including slow predict smoke
+```
+
+CI runs unit tests on every push to `main` (see `.github/workflows/test.yml`).
+
 On Windows PowerShell, if rupee symbols print weird:
 
 ```powershell
