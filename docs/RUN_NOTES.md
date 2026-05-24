@@ -4,6 +4,25 @@ Scratch pad for numbers we paste into slides. Regenerate by running `scripts/tra
 
 ---
 
+## 2026-05-24 — finalist push (code shipped)
+
+**Stacking fix:** meta trained on OOF `p_lgb`/`p_cat` (not in-sample ensemble averages).  
+**Submission:** `churn_probability` = rank-averaged LGB/Cat (OOF-tuned weights in `rank_stack_weights.json`); `churn_prediction` = cost threshold on calibrated stack.  
+**Uplift:** IPTW + propensity overlap trim → see `uplift_propensity_summary.json` after `build_artifacts`.  
+**Fairness:** no per-group threshold shift (DP gaps still under 10%).
+
+Re-run on full data when CSVs are in `data/raw/`:
+
+```powershell
+python -m scripts.train
+python -m scripts.build_artifacts
+python -m scripts.predict
+```
+
+Then paste fresh PR-AUC, threshold, rank weights, and uplift counts below.
+
+---
+
 ## 2026-05-24 — first full pipeline run
 
 Stack: LightGBM + CatBoost (5-fold OOF) → logistic meta → isotonic calibration. Seed 42.

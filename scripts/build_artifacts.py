@@ -129,6 +129,9 @@ def run_uplift_and_chart():
     X_fe = features.transform(X_raw, fe_state)
 
     t_learner = uplift.fit_t_learner(X_fe, y)
+    uplift.write_propensity_summary(
+        X_fe, artifacts.uplift_propensity_summary_path()
+    )
     cate = uplift.estimate_cate(t_learner, X_fe)
     print(f"  CATE mean={cate.mean():.4f}, std={cate.std():.4f}")
 

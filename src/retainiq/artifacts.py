@@ -42,6 +42,14 @@ def manifest_path() -> Path:
     return config.DATA_PROCESSED / "artifacts_manifest.json"
 
 
+def rank_stack_weights_path() -> Path:
+    return config.DATA_PROCESSED / "rank_stack_weights.json"
+
+
+def uplift_propensity_summary_path() -> Path:
+    return config.DATA_PROCESSED / "uplift_propensity_summary.json"
+
+
 def chart_dir() -> Path:
     return config.PROJECT_ROOT / "deck" / "charts"
 

@@ -43,9 +43,9 @@ Bar chart: churn rate by segment × tenure bucket.
 
 ## Slide 5 — Approach (one slide)
 
-- LightGBM + CatBoost, 5-fold OOF, logistic stack, isotonic calibration
-- Threshold from cost sweep, not 0.5
-- T-learner uplift on `retention_offer_received`
+- LightGBM + CatBoost, 5-fold OOF, logistic meta on OOF, Platt calibration
+- Rank stack for `churn_probability`; calibrated stack + cost threshold for `churn_prediction`
+- T-learner uplift on `retention_offer_received` with IPTW + overlap trim
 - Fairness on gender + region
 
 ---
@@ -103,7 +103,8 @@ PNG: `deck/charts/10_uplift_quadrant.png`
 
 Numbers: **4** persuadables, **141** sleeping-dogs (from run notes).
 
-Caveat: offers weren't randomised — say that out loud.
+Caveat: offers weren't randomised — say that out loud.  
+Method: propensity scores clipped to [0.05, 0.95], overlap trim, IPTW-weighted T-learner (`uplift_propensity_summary.json` for n trimmed).
 
 ---
 

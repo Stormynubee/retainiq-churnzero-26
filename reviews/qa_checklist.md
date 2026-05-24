@@ -12,7 +12,8 @@ Both of us sign each section before uploading to Unstop.
 - [ ] same `customer_id` order as test file
 - [ ] no nulls
 - [ ] predictions 0/1 only, probs in [0, 1]
-- [ ] threshold is cost-optimal (not 0.5)
+- [ ] threshold is cost-optimal on **calibrated** probs (not 0.5)
+- [ ] `churn_probability` is rank stack; `churn_prediction` from calibrated + cost threshold
 - [ ] positive rate roughly 10–45%
 
 Hansraj: ______  swayangjeet: ______

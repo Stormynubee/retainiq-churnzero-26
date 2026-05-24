@@ -10,7 +10,8 @@ pip install -e ".[dev]"
 
 | Command | Purpose |
 |---|---|
-| `python -m pytest -m "not slow and not integration"` | Fast unit tests (~5s) |
+| `python -m pytest -m "not slow and not integration"` | Fast unit tests (~5s, ~50 tests) |
+| `python -m pytest` | Full suite (~58 tests) |
 | `python -m pytest -m slow` | Smoke train on synthetic data (~10s) |
 | `python -m pytest -m integration` | Needs `data/raw/` CSVs |
 | `python -m scripts.train` | Full train (~4 min) |

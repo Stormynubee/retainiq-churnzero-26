@@ -8,9 +8,9 @@ One-page map of RetainIQ. Full design rationale: [`docs/specs/2026-05-24-retaini
 raw CSVs
   → data.py          load, stratified folds
   → features.py      ratios, categoricals, missingness (train-only fit)
-  → models.py        LightGBM + CatBoost OOF → ensemble-averaged meta → OOF Platt
-  → threshold.py     rupee cost sweep → optimal t
-  → submit.py        competition CSV
+  → models.py        LightGBM + CatBoost OOF → meta on OOF → OOF Platt + rank blend tune
+  → threshold.py     rupee cost sweep → optimal t (on calibrated OOF)
+  → submit.py        dual-track CSV (rank prob / calibrated binary)
   → importance.py    LGB gain table (during train)
   → uplift.py        T-learner CATE + segments (deck)
   → fairness.py      gender / region audit (deck)
@@ -38,6 +38,17 @@ After `train()`:
 | `training_metrics.json` | OOF metrics @ optimal vs 0.5 |
 | `feature_importances.csv` | Deck chart 09 |
 | `artifacts_manifest.json` | Seed, git commit, headline numbers |
+| `rank_stack_weights.json` | OOF-tuned rank blend for `churn_probability` |
+| `uplift_propensity_summary.json` | IPTW trim stats for deck |
+
+## Predict (dual-track)
+
+```
+test features
+  → ensemble_base_predictions (LGB + Cat avg)
+  → predict_stacked → Platt → threshold → churn_prediction
+  → rank_average_probabilities → churn_probability
+```
 
 ## Tests
 

@@ -6,12 +6,13 @@
   <a href="https://github.com/Stormynubee/retainiq-churnzero-26/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/Stormynubee/retainiq-churnzero-26/test.yml?branch=main&style=for-the-badge&label=CI" alt="CI" /></a>
   <a href="https://unstop.com/competitions/churnzero-26-iit-kharagpur-1686181"><img src="https://img.shields.io/badge/ChurnZero%2026-IIT%20Kharagpur-6366F1?style=for-the-badge" alt="ChurnZero 26" /></a>
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/tests-58%20passed-22C55E?style=for-the-badge" alt="Tests" />
   <img src="https://img.shields.io/badge/PR--AUC-0.9999-22C55E?style=for-the-badge" alt="PR-AUC" />
 </p>
 
 <p align="center">
   <b>RetainIQ</b> — Round 2 submission for banking churn prediction at ChurnZero 26.<br/>
-  Stacked ensemble + cost-optimal threshold + uplift segmentation + fairness audit.<br/>
+  OOF stacking + dual-track submission + cost-optimal threshold + IPTW uplift + fairness audit.<br/>
   Built by <b>Hansraj Tiwari</b> (ML) & <b>swayangjeet nayak</b> (deck & strategy).
 </p>
 
@@ -23,12 +24,15 @@ Most teams will hit PR-AUC ≈ 0.99 on this dataset — it's very separable. We 
 
 | Layer | What it does | Headline result |
 |---|---|---|
-| **Prediction** | LightGBM + CatBoost → logistic stacker → **Platt calibration** (OOF meta) | PR-AUC **0.9999** (5-fold OOF) |
+| **Prediction** | LightGBM + CatBoost OOF → meta on OOF → **Platt calibration** | PR-AUC **0.9999** (5-fold OOF) |
+| **Submission** | Rank blend → `churn_probability`; calibrated stack → `churn_prediction` @ cost threshold | Leaderboard column + rupee-optimal binary |
 | **Threshold** | Sweep thresholds; minimise rupee cost (FN ₹40k, FP ₹500) | **₹62,500** vs ₹200,500 @ t=0.5 — **~69% savings** |
-| **Uplift** | T-learner on `retention_offer_received` | **4** persuadables, **141** sleeping dogs |
+| **Uplift** | IPTW T-learner on `retention_offer_received` (overlap trim) | **4** persuadables, **141** sleeping dogs |
 | **Fairness** | Demographic parity on gender & region @ operating threshold | Both under **10%** parity gap |
 
 > The model is saturated. The business story is in the threshold, uplift, and retention playbook — not another 0.001 AUC bump.
+
+Methodology notes: [`docs/CAUSAL_FIXES.md`](docs/CAUSAL_FIXES.md)
 
 ---
 
@@ -68,16 +72,19 @@ flowchart LR
   A[Raw CSVs] --> B[Feature Engineering]
   B --> C[LightGBM OOF]
   B --> D[CatBoost OOF]
-  C --> E[Logistic Stacker]
+  C --> E[Meta on OOF]
   D --> E
-  E --> F[Isotonic Calibration]
-  F --> G[Cost Threshold Sweep]
-  F --> H[Submission CSV]
-  F --> I[T-Learner Uplift]
-  F --> J[Fairness Audit]
-  G --> K[Deck Charts]
-  I --> K
-  J --> K
+  E --> F[Platt Calibration]
+  F --> G[Cost Threshold]
+  C --> R[Rank Stack]
+  D --> R
+  R --> H[churn_probability]
+  F --> I[churn_prediction]
+  F --> J[IPTW T-Learner]
+  F --> K[Fairness Audit]
+  G --> L[Deck Charts]
+  J --> L
+  K --> L
 ```
 
 ```
@@ -85,7 +92,7 @@ src/retainiq/     data, features, models, threshold, uplift, fairness
 scripts/          train · predict · build_artifacts · audit_features
 notebooks/        narrative walkthrough for judges
 deck/             slide outline + chart PNGs
-tests/            pytest unit + integration suite
+tests/            pytest unit + smoke + integration
 ```
 
 ---
@@ -109,7 +116,7 @@ python -m scripts.build_artifacts
 python -m scripts.predict
 ```
 
-**Read next:** [`docs/PLAYBOOK.md`](docs/PLAYBOOK.md) · [`docs/RESULTS.md`](docs/RESULTS.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+**Read next:** [`docs/PLAYBOOK.md`](docs/PLAYBOOK.md) · [`docs/RESULTS.md`](docs/RESULTS.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/CAUSAL_FIXES.md`](docs/CAUSAL_FIXES.md)
 
 ---
 
@@ -132,16 +139,18 @@ python -m scripts.predict          # submission CSV
 pip install -r requirements-dev.txt
 python -m pytest -m "not slow and not integration"   # fast unit tests (~10s)
 python -m pytest -m integration                    # needs data/raw CSVs
-python -m pytest                                     # full suite
+python -m pytest                                     # full suite (~58 tests)
 ```
 
-CI runs unit tests on every push to `main`.
+CI runs unit + smoke tests on every push to `main`.
 
 | Output | Description |
 |---|---|
 | `submission/ChurnZero_RetainIQ_Predictions.csv` | 2,026-row submission |
 | `data/processed/training_metrics.json` | OOF PR-AUC, F1, cost @ optimal vs 0.5 |
+| `data/processed/rank_stack_weights.json` | OOF-tuned rank blend weights |
 | `data/processed/cost_curve.csv` | threshold sweep for deck slide 8 |
+| `data/processed/uplift_propensity_summary.json` | IPTW trim stats for deck |
 | `deck/charts/*.png` | cost curve, importance, uplift, fairness |
 
 On Windows PowerShell, if rupee symbols print garbled: `$env:PYTHONIOENCODING = "utf-8"`
@@ -164,6 +173,7 @@ On Windows PowerShell, if rupee symbols print garbled: `$env:PYTHONIOENCODING = 
 - `customer_id` never enters the model
 - Feature engineering fits on train only; test uses saved `fe_state.joblib`
 - Seed **42** everywhere — runs are deterministic
+- Post-treatment columns dropped before features; see `docs/CAUSAL_FIXES.md`
 
 Full numbers and slide copy-paste values: [`docs/RUN_NOTES.md`](docs/RUN_NOTES.md)
 

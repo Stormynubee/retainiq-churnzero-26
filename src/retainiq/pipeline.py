@@ -82,16 +82,17 @@ def train(options: TrainOptions | None = None) -> dict:
     )
 
     print("stacker + calibration...")
-    avg_lgb, avg_cat = models.ensemble_base_predictions(
-        X_fe, lgb_models, cat_models, cat_idx
-    )
-    meta = models.fit_meta(avg_lgb, avg_cat, y)
+    meta = models.fit_meta(oof_lgb, oof_cat, y)
 
     oof_meta = models.fit_meta_oof(oof_lgb, oof_cat, y, splitter)
     calibrator = models.calibrate_platt(oof_meta, y)
     oof_calibrated = models.predict_platt(calibrator, oof_meta)
 
-    oof_stacked = models.stacked_oof(avg_lgb, avg_cat, meta)
+    rank_weights = models.tune_rank_stack_weights(oof_lgb, oof_cat, y.values)
+    artifacts.rank_stack_weights_path().write_text(json.dumps(rank_weights, indent=2))
+    oof_rank = models.rank_average_probabilities(
+        oof_lgb, oof_cat, rank_weights["w_lgb"], rank_weights["w_cat"]
+    )
 
     print("threshold sweep...")
     best = find_cost_optimal_threshold(y.values, oof_calibrated)
@@ -129,8 +130,9 @@ def train(options: TrainOptions | None = None) -> dict:
             "y_true": y.values,
             "p_lgb": oof_lgb,
             "p_cat": oof_cat,
-            "p_stacked": oof_stacked,
+            "p_stacked": oof_meta,
             "p_calibrated": oof_calibrated,
+            "p_rank": oof_rank,
         }
     ).to_parquet(artifacts.oof_path(), index=False)
 
@@ -148,6 +150,8 @@ def train(options: TrainOptions | None = None) -> dict:
             "n_splits": opts.n_splits,
             "optimal_threshold": threshold,
             "pr_auc": metrics_optimal["pr_auc"],
+            "pr_auc_rank_oof": rank_weights["oof_pr_auc"],
+            "rank_stack_weights": rank_weights,
             "cost_optimal_inr": metrics_optimal["total_cost_inr"],
             "cost_naive_inr": metrics_naive["total_cost_inr"],
         }
@@ -162,17 +166,32 @@ def predict(test_path: Path | str | None = None) -> Path:
     print("loading test...")
     df_test = data.load_test(test_path or config.TEST_CSV)
     test_ids = df_test[config.ID_COL].copy()
-    X_raw = df_test.drop(columns=config.DROP_BEFORE_FEATURES)
+    X_raw = data.drop_inference_features(df_test)
 
     fe_state = joblib.load(artifacts.fe_state_path())
     bundle: models.StackedBundle = joblib.load(artifacts.bundle_path())
     threshold_info = json.loads(artifacts.threshold_path().read_text())
     threshold = float(threshold_info["threshold"])
 
-    X_fe = features.transform(X_raw, fe_state)
-    y_proba = models.predict_stacked(bundle, X_fe)
+    rank_weights_path = artifacts.rank_stack_weights_path()
+    if rank_weights_path.is_file():
+        rank_weights = json.loads(rank_weights_path.read_text())
+    else:
+        rank_weights = {"w_lgb": 0.5, "w_cat": 0.5}
 
-    sub = submit.build_submission(test_ids, y_proba, threshold)
+    X_fe = features.transform(X_raw, fe_state)
+    avg_lgb, avg_cat = models.ensemble_base_predictions(
+        X_fe,
+        bundle.lgb_models,
+        bundle.cat_models,
+        bundle.cat_feature_indices,
+    )
+    p_calibrated = models.predict_stacked(bundle, X_fe)
+    p_rank = models.rank_average_probabilities(
+        avg_lgb, avg_cat, rank_weights["w_lgb"], rank_weights["w_cat"]
+    )
+
+    sub = submit.build_submission(test_ids, p_rank, threshold, y_proba_calibrated=p_calibrated)
     out = submit.write_submission(sub)
     print(f"wrote {out}")
     print(f"  threshold {threshold:.4f}, positive rate {sub['churn_prediction'].mean():.4f}")

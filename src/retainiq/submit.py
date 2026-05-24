@@ -10,16 +10,24 @@ from . import config
 
 def build_submission(
     test_ids: pd.Series,
-    y_proba: np.ndarray,
+    y_proba_rank: np.ndarray,
     threshold: float,
+    *,
+    y_proba_calibrated: np.ndarray | None = None,
 ) -> pd.DataFrame:
-    y_proba = np.clip(np.asarray(y_proba), 0.0, 1.0)
-    y_pred = (y_proba >= threshold).astype(int)
+    """Rank probabilities for PR-AUC column; calibrated stream for cost-optimal binary preds."""
+    p_rank = np.clip(np.asarray(y_proba_rank, dtype=float), 0.0, 1.0)
+    p_cal = np.clip(
+        np.asarray(y_proba_calibrated if y_proba_calibrated is not None else p_rank, dtype=float),
+        0.0,
+        1.0,
+    )
+    y_pred = (p_cal >= threshold).astype(int)
     return pd.DataFrame(
         {
             config.ID_COL: test_ids.values,
             "churn_prediction": y_pred,
-            "churn_probability": np.round(y_proba, 6),
+            "churn_probability": np.round(p_rank, 6),
         }
     )
 

@@ -34,4 +34,5 @@ def test_smoke_train_writes_core_artifacts(tmp_path, monkeypatch):
     assert artifacts.fe_state_path().is_file()
     assert artifacts.feature_importances_path().is_file()
     assert artifacts.manifest_path().is_file()
+    assert artifacts.rank_stack_weights_path().is_file()
     assert artifacts.metrics_path().is_file()

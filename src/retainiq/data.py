@@ -26,6 +26,11 @@ def load_test(path: Path | str = config.TEST_CSV) -> pd.DataFrame:
     return df
 
 
+def drop_inference_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop ID and post-treatment cols; safe when test schema omits optional columns."""
+    return df.drop(columns=config.DROP_BEFORE_FEATURES, errors="ignore")
+
+
 def split_features_target(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     y = df[config.TARGET_COL].astype(int)
     drop_cols = [config.TARGET_COL] + [

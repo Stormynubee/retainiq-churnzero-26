@@ -15,6 +15,15 @@ Place these in `data/raw/` (from the [ChurnZero 26 portal](https://unstop.com/co
 
 Created by `python -m scripts.train` — gitignored, reproducible locally.
 
+Key files after train + `build_artifacts`:
+
+| File | Purpose |
+|---|---|
+| `stacked_bundle.joblib` | Models + meta + Platt calibrator |
+| `rank_stack_weights.json` | OOF rank blend for submission probabilities |
+| `cost_optimal_threshold.json` | Rupee-optimal threshold |
+| `uplift_propensity_summary.json` | IPTW trim stats (after build_artifacts) |
+
 ## CI / tests without competition data
 
 Synthetic fixtures live in `tests/fixtures/`:

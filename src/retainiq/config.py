@@ -35,6 +35,10 @@ POST_TREATMENT_COLS: list[str] = [
     TREATMENT_COL_SECONDARY,
 ]
 
+# propensity overlap for IPTW uplift
+PROPENSITY_MIN = 0.05
+PROPENSITY_MAX = 0.95
+
 CATEGORICAL_COLS: list[str] = [
     "gender",
     "marital_status",

@@ -6,11 +6,20 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+from scipy.stats import rankdata
 from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import average_precision_score
 from sklearn.model_selection import StratifiedKFold
 
 from . import config
+
+RANK_WEIGHT_GRID: list[tuple[float, float]] = [
+    (0.5, 0.5),
+    (0.6, 0.4),
+    (0.7, 0.3),
+    (0.4, 0.6),
+]
 
 _EPS = 1e-6
 
@@ -211,6 +220,34 @@ def apply_calibration(calibrator: LogisticRegression | IsotonicRegression, p_unc
 
 # Backward-compatible alias (deprecated)
 calibrate_isotonic = calibrate_platt
+
+
+def rank_average_probabilities(
+    p_lgb: np.ndarray,
+    p_cat: np.ndarray,
+    w_lgb: float = 0.5,
+    w_cat: float = 0.5,
+) -> np.ndarray:
+    n = len(p_lgb)
+    r1 = rankdata(p_lgb) / (n + 1)
+    r2 = rankdata(p_cat) / (n + 1)
+    return w_lgb * r1 + w_cat * r2
+
+
+def tune_rank_stack_weights(
+    oof_lgb: np.ndarray,
+    oof_cat: np.ndarray,
+    y_true: np.ndarray,
+) -> dict:
+    """Pick rank-blend weights that maximise OOF PR-AUC."""
+    best = {"w_lgb": 0.5, "w_cat": 0.5, "oof_pr_auc": -1.0}
+    y_true = np.asarray(y_true).astype(int)
+    for w_lgb, w_cat in RANK_WEIGHT_GRID:
+        p_rank = rank_average_probabilities(oof_lgb, oof_cat, w_lgb, w_cat)
+        pr_auc = float(average_precision_score(y_true, p_rank))
+        if pr_auc > best["oof_pr_auc"]:
+            best = {"w_lgb": w_lgb, "w_cat": w_cat, "oof_pr_auc": pr_auc}
+    return best
 
 
 def predict_stacked(bundle: StackedBundle, X_test: pd.DataFrame) -> np.ndarray:

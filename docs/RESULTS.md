@@ -2,6 +2,8 @@
 
 Canonical numbers from OOF evaluation on **8,101** training customers (seed 42, 5-fold CV). Regenerate with `python -m scripts.train`.
 
+**Finalist push (2026-05-24):** After re-train, check `artifacts_manifest.json` for `pr_auc_rank_oof` and `rank_stack_weights`. Submission uses rank probabilities for the leaderboard column and calibrated probabilities for the cost-optimal binary column.
+
 ## Model performance
 
 | Metric | Cost-optimal (t ≈ 0.001) | Naive (t = 0.5) |

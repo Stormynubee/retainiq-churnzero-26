@@ -6,7 +6,10 @@ What RetainIQ recommends **Monday morning** if this model were deployed — tied
 
 Run `python -m scripts.predict` (or `retainiq-predict` after `pip install -e .`).
 
-Output: `churn_probability` per customer + binary flag at **cost-optimal threshold** (~0.001), not 0.5.
+Output per customer:
+
+- `churn_probability` — rank-averaged LGB/Cat scores (OOF-tuned weights; optimizes PR-AUC ranking)
+- `churn_prediction` — binary flag from **calibrated** stack at **cost-optimal threshold** (~0.001), not 0.5
 
 ## 2. Prioritize by rupee impact
 
@@ -35,7 +38,7 @@ Both under our **10%** policy line at the operating threshold.
 ## 5. Honest limits (say these out loud)
 
 - PR-AUC ≈ 0.9999 — you cannot win Round 2 on model score alone.
-- `retention_offer_received` is **not** a randomized experiment; uplift counts are directional.
+- `retention_offer_received` is **not** a randomized experiment; uplift uses IPTW + overlap trim but counts remain directional.
 - Only **4** persuadables in training — use uplift for **policy ordering**, not precise headcount.
 - OOF threshold is optimistic vs a true holdout; recalibrate in production.
 
