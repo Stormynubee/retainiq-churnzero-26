@@ -34,6 +34,68 @@ Pre-upload gate: `python -m scripts.pre_upload_check`
 
 ---
 
+## Reproduce the model (submission requirement)
+
+Judges require a **public GitHub repo** with a README that explains how to rebuild the model, plus a **test-set predictions CSV**. This repo satisfies both.
+
+**Repository:** [github.com/Stormynubee/retainiq-churnzero-26](https://github.com/Stormynubee/retainiq-churnzero-26)
+
+### Predictions file (upload to Unstop)
+
+| Requirement | Our file |
+|---|---|
+| Filename | `ChurnZero_RetainIQ_Predictions.csv` (`ChurnZero_<TeamName>_Predictions.csv`) |
+| Rows | **2,026** (one per test `customer_id`) |
+| Columns | `customer_id`, `churn_prediction` (0 or 1), `churn_probability` (float in [0, 1]) |
+| Integrity | Same `customer_id` order as `data/raw/ChurnZero_test_v1.csv`; no nulls |
+
+Local path after `predict`: [`submission/ChurnZero_RetainIQ_Predictions.csv`](submission/ChurnZero_RetainIQ_Predictions.csv) (gitignored — generate locally; do not commit raw competition data).
+
+### Steps to reproduce from scratch
+
+1. **Python 3.11+** and competition CSVs in `data/raw/` ([`data/README.md`](data/README.md)):
+   - `ChurnZero_dataset_v1.csv` (8,101 train rows)
+   - `ChurnZero_test_v1.csv` (2,026 test rows)
+
+2. **Install and train** (deterministic, seed 42):
+
+```powershell
+git clone https://github.com/Stormynubee/retainiq-churnzero-26.git
+cd retainiq-churnzero-26
+pip install -e ".[dev]"
+python -m scripts.train
+```
+
+`train` fits feature engineering on train only, runs 5-fold OOF LightGBM + CatBoost, meta learner on OOF preds, Platt calibration, cost-threshold sweep, and writes `data/processed/stacked_bundle.joblib`, `rank_stack_weights.json`, and `cost_optimal_threshold.json`.
+
+3. **Build submission CSV:**
+
+```powershell
+python -m scripts.predict
+python -m scripts.validate_submission
+```
+
+`predict` loads the saved bundle and writes `submission/ChurnZero_RetainIQ_Predictions.csv`:
+- `churn_probability` — rank blend of base models (leaderboard / PR-AUC column)
+- `churn_prediction` — calibrated stack at rupee-optimal threshold (~0.002)
+
+4. **Optional** (deck / uplift / fairness, not required for CSV):
+
+```powershell
+python -m scripts.build_artifacts
+```
+
+5. **Verify:**
+
+```powershell
+python -m pytest -m "not slow and not integration"
+python -m scripts.pre_upload_check
+```
+
+Methodology and leakage fixes: [`docs/CAUSAL_FIXES.md`](docs/CAUSAL_FIXES.md) · tests: `tests/test_causal_leakage.py`, `tests/test_stacking_train.py`.
+
+---
+
 ## Why RetainIQ
 
 PR-AUC is ~**1.0** on this dataset (very separable; we document leakage checks in [`tests/test_causal_leakage.py`](tests/test_causal_leakage.py) and ablation notes in [`docs/RUN_NOTES.md`](docs/RUN_NOTES.md)). We competed on **rupee cost at the operating point** and **who should get an offer**:
