@@ -82,10 +82,16 @@ def train(options: TrainOptions | None = None) -> dict:
     )
 
     print("stacker + calibration...")
-    meta = models.fit_meta(oof_lgb, oof_cat, y)
-    oof_stacked = models.stacked_oof(oof_lgb, oof_cat, meta)
-    calibrator = models.calibrate_isotonic(oof_stacked, y)
-    oof_calibrated = calibrator.predict(oof_stacked)
+    avg_lgb, avg_cat = models.ensemble_base_predictions(
+        X_fe, lgb_models, cat_models, cat_idx
+    )
+    meta = models.fit_meta(avg_lgb, avg_cat, y)
+
+    oof_meta = models.fit_meta_oof(oof_lgb, oof_cat, y, splitter)
+    calibrator = models.calibrate_platt(oof_meta, y)
+    oof_calibrated = models.predict_platt(calibrator, oof_meta)
+
+    oof_stacked = models.stacked_oof(avg_lgb, avg_cat, meta)
 
     print("threshold sweep...")
     best = find_cost_optimal_threshold(y.values, oof_calibrated)

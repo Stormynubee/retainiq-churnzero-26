@@ -8,7 +8,7 @@ One-page map of RetainIQ. Full design rationale: [`docs/specs/2026-05-24-retaini
 raw CSVs
   → data.py          load, stratified folds
   → features.py      ratios, categoricals, missingness (train-only fit)
-  → models.py        LightGBM + CatBoost OOF → logistic stack → isotonic
+  → models.py        LightGBM + CatBoost OOF → ensemble-averaged meta → OOF Platt
   → threshold.py     rupee cost sweep → optimal t
   → submit.py        competition CSV
   → importance.py    LGB gain table (during train)

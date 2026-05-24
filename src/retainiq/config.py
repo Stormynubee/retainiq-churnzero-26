@@ -29,6 +29,12 @@ TREATMENT_COL_PRIMARY = "retention_offer_received"
 TREATMENT_COL_COMPLIANCE = "retention_offer_accepted"
 TREATMENT_COL_SECONDARY = "discount_or_fee_waiver_received"
 
+# Post-treatment outcomes — never use to predict pre-intervention churn
+POST_TREATMENT_COLS: list[str] = [
+    TREATMENT_COL_COMPLIANCE,
+    TREATMENT_COL_SECONDARY,
+]
+
 CATEGORICAL_COLS: list[str] = [
     "gender",
     "marital_status",
@@ -48,4 +54,4 @@ CATEGORICAL_COLS: list[str] = [
 ]
 
 SENSITIVE_COLS: list[str] = ["gender", "region"]
-DROP_BEFORE_FEATURES: list[str] = [ID_COL]
+DROP_BEFORE_FEATURES: list[str] = [ID_COL, *POST_TREATMENT_COLS]

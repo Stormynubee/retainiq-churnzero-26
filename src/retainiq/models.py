@@ -1,4 +1,6 @@
-"""LightGBM + CatBoost stack with isotonic calibration."""
+"""LightGBM + CatBoost stack with OOF meta calibration and Platt scaling."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 
@@ -10,15 +12,22 @@ from sklearn.model_selection import StratifiedKFold
 
 from . import config
 
+_EPS = 1e-6
+
 
 @dataclass
 class StackedBundle:
     lgb_models: list
     cat_models: list
     meta_model: LogisticRegression
-    calibrator: IsotonicRegression
+    calibrator: LogisticRegression
     cat_feature_indices: list[int]
     feature_columns: list[str]
+
+
+def _logit(p: np.ndarray) -> np.ndarray:
+    p = np.clip(np.asarray(p, dtype=float), _EPS, 1.0 - _EPS)
+    return np.log(p / (1.0 - p)).reshape(-1, 1)
 
 
 def train_lightgbm_oof(
@@ -45,7 +54,9 @@ def train_lightgbm_oof(
         "force_col_wise": True,
     }
     if params:
-        base_params.update({k: v for k, v in params.items() if k not in ("num_boost_round", "early_stopping")})
+        base_params.update(
+            {k: v for k, v in params.items() if k not in ("num_boost_round", "early_stopping")}
+        )
 
     num_boost_round = int((params or {}).get("num_boost_round", 2000))
     early_stopping = int((params or {}).get("early_stopping", 100))
@@ -121,6 +132,33 @@ def train_catboost_oof(
     return oof, models
 
 
+def ensemble_base_predictions(
+    X: pd.DataFrame,
+    lgb_models: list,
+    cat_models: list,
+    cat_feature_indices: list[int],
+) -> tuple[np.ndarray, np.ndarray]:
+    """Average fold models — matches inference distribution for the meta-learner."""
+    if lgb_models:
+        avg_lgb = np.mean(
+            [m.predict(X, num_iteration=m.best_iteration) for m in lgb_models],
+            axis=0,
+        )
+    else:
+        avg_lgb = np.zeros(len(X))
+
+    if cat_models:
+        X_str = X.copy()
+        for idx in cat_feature_indices:
+            col = X_str.columns[idx]
+            X_str[col] = X_str[col].astype(str)
+        avg_cat = np.mean([m.predict_proba(X_str)[:, 1] for m in cat_models], axis=0)
+    else:
+        avg_cat = np.zeros(len(X))
+
+    return avg_lgb, avg_cat
+
+
 def fit_meta(oof_lgb: np.ndarray, oof_cat: np.ndarray, y: pd.Series) -> LogisticRegression:
     Z = np.column_stack([oof_lgb, oof_cat])
     meta = LogisticRegression(C=1.0, max_iter=1000, random_state=config.RANDOM_SEED)
@@ -137,29 +175,53 @@ def stacked_oof(
     return meta.predict_proba(Z)[:, 1]
 
 
-def calibrate_isotonic(p_uncal: np.ndarray, y_true: pd.Series) -> IsotonicRegression:
-    iso = IsotonicRegression(out_of_bounds="clip")
-    iso.fit(p_uncal, y_true)
-    return iso
+def fit_meta_oof(
+    oof_lgb: np.ndarray,
+    oof_cat: np.ndarray,
+    y: pd.Series,
+    splitter: StratifiedKFold,
+) -> np.ndarray:
+    """Out-of-fold stacked probabilities for honest calibration / threshold tuning."""
+    oof_meta = np.zeros(len(y))
+    dummy = np.zeros(len(y))
+    for tr, va in splitter.split(dummy, y):
+        meta_fold = fit_meta(oof_lgb[tr], oof_cat[tr], y.iloc[tr])
+        Z_va = np.column_stack([oof_lgb[va], oof_cat[va]])
+        oof_meta[va] = meta_fold.predict_proba(Z_va)[:, 1]
+    return oof_meta
+
+
+def calibrate_platt(p_uncal: np.ndarray, y_true: pd.Series) -> LogisticRegression:
+    """Platt scaling — smooth probabilities for low-threshold cost sweeps."""
+    calibrator = LogisticRegression(C=1e10, max_iter=1000, random_state=config.RANDOM_SEED)
+    calibrator.fit(_logit(p_uncal), y_true)
+    return calibrator
+
+
+def predict_platt(calibrator: LogisticRegression, p_uncal: np.ndarray) -> np.ndarray:
+    return calibrator.predict_proba(_logit(p_uncal))[:, 1]
+
+
+def apply_calibration(calibrator: LogisticRegression | IsotonicRegression, p_uncal: np.ndarray) -> np.ndarray:
+    """Apply Platt or legacy isotonic bundle calibrator."""
+    if isinstance(calibrator, IsotonicRegression):
+        return calibrator.predict(p_uncal)
+    return predict_platt(calibrator, p_uncal)
+
+
+# Backward-compatible alias (deprecated)
+calibrate_isotonic = calibrate_platt
 
 
 def predict_stacked(bundle: StackedBundle, X_test: pd.DataFrame) -> np.ndarray:
     X_test = X_test[bundle.feature_columns]
 
-    lgb_preds = np.mean(
-        [m.predict(X_test, num_iteration=m.best_iteration) for m in bundle.lgb_models],
-        axis=0,
+    avg_lgb, avg_cat = ensemble_base_predictions(
+        X_test,
+        bundle.lgb_models,
+        bundle.cat_models,
+        bundle.cat_feature_indices,
     )
-
-    X_str = X_test.copy()
-    for idx in bundle.cat_feature_indices:
-        col = X_str.columns[idx]
-        X_str[col] = X_str[col].astype(str)
-    cat_preds = np.mean(
-        [m.predict_proba(X_str)[:, 1] for m in bundle.cat_models],
-        axis=0,
-    )
-
-    Z = np.column_stack([lgb_preds, cat_preds])
+    Z = np.column_stack([avg_lgb, avg_cat])
     p_uncal = bundle.meta_model.predict_proba(Z)[:, 1]
-    return bundle.calibrator.predict(p_uncal)
+    return apply_calibration(bundle.calibrator, p_uncal)

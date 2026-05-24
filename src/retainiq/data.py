@@ -28,7 +28,10 @@ def load_test(path: Path | str = config.TEST_CSV) -> pd.DataFrame:
 
 def split_features_target(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     y = df[config.TARGET_COL].astype(int)
-    X = df.drop(columns=[config.TARGET_COL] + config.DROP_BEFORE_FEATURES)
+    drop_cols = [config.TARGET_COL] + [
+        c for c in config.DROP_BEFORE_FEATURES if c in df.columns
+    ]
+    X = df.drop(columns=drop_cols)
     return X, y
 
 

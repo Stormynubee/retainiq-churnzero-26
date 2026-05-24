@@ -51,11 +51,6 @@ def _engineer_ratios(df: pd.DataFrame) -> pd.DataFrame:
             1 + df["branch_visit_count"]
         )
 
-    if {"retention_offer_received", "retention_offer_accepted"}.issubset(df.columns):
-        df["retention_offer_effective"] = (
-            df["retention_offer_received"] * df["retention_offer_accepted"]
-        )
-
     return df
 
 

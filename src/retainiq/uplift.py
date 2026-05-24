@@ -14,6 +14,12 @@ from sklearn.linear_model import LogisticRegression
 from . import config
 
 
+def _drop_uplift_leakage_cols(X: pd.DataFrame) -> pd.DataFrame:
+    """Remove treatment assignment and post-treatment compliance from uplift features."""
+    drop = [config.TREATMENT_COL_PRIMARY, *config.POST_TREATMENT_COLS]
+    return X.drop(columns=[c for c in drop if c in X.columns])
+
+
 def split_treatment(
     X: pd.DataFrame, y: pd.Series, treatment_col: str = config.TREATMENT_COL_PRIMARY
 ) -> tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
@@ -21,7 +27,7 @@ def split_treatment(
         raise KeyError(f"no column {treatment_col!r}")
 
     t = X[treatment_col].astype(int).values
-    X_no_t = X.drop(columns=[treatment_col])
+    X_no_t = _drop_uplift_leakage_cols(X)
     treated_mask = t == 1
     return (
         X_no_t.loc[treated_mask].copy(),
@@ -50,7 +56,7 @@ def fit_t_learner(X: pd.DataFrame, y: pd.Series) -> dict:
 
 
 def estimate_cate(model_dict: dict, X: pd.DataFrame) -> np.ndarray:
-    X_no_t = X.drop(columns=[config.TREATMENT_COL_PRIMARY], errors="ignore")
+    X_no_t = _drop_uplift_leakage_cols(X)
     p_stay_t = model_dict["mu_1"].predict_proba(X_no_t)[:, 1]
     p_stay_c = model_dict["mu_0"].predict_proba(X_no_t)[:, 1]
     return p_stay_t - p_stay_c

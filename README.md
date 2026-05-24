@@ -23,7 +23,7 @@ Most teams will hit PR-AUC ≈ 0.99 on this dataset — it's very separable. We 
 
 | Layer | What it does | Headline result |
 |---|---|---|
-| **Prediction** | LightGBM + CatBoost → logistic stacker → isotonic calibration | PR-AUC **0.9999** (5-fold OOF) |
+| **Prediction** | LightGBM + CatBoost → logistic stacker → **Platt calibration** (OOF meta) | PR-AUC **0.9999** (5-fold OOF) |
 | **Threshold** | Sweep thresholds; minimise rupee cost (FN ₹40k, FP ₹500) | **₹62,500** vs ₹200,500 @ t=0.5 — **~69% savings** |
 | **Uplift** | T-learner on `retention_offer_received` | **4** persuadables, **141** sleeping dogs |
 | **Fairness** | Demographic parity on gender & region @ operating threshold | Both under **10%** parity gap |
