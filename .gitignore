@@ -47,3 +47,6 @@ logs/
 # Optuna
 optuna.db
 *.optuna.db
+
+# CatBoost training artifacts
+catboost_info/
