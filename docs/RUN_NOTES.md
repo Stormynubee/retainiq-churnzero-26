@@ -71,6 +71,10 @@ python -m scripts.package_submission
 
 ---
 
+## Historical (superseded) — first full pipeline run
+
+> Do not paste these into slides. Kept for audit trail only.
+
 ## 2026-05-24 — first full pipeline run
 
 Stack: LightGBM + CatBoost (5-fold OOF) → logistic meta → isotonic calibration. Seed 42.

@@ -44,7 +44,7 @@ python -m scripts.predict
 ### 1. Cost threshold (Hansraj → slide 8)
 
 - FN **₹40,000**, FP **₹500** → ratio 80:1 → naive t=0.5 is wrong for this cost matrix.
-- We sweep thresholds on **OOF calibrated** probabilities and pick minimum rupee cost (~t ≈ 0.001).
+- We sweep thresholds on **OOF calibrated** probabilities and pick minimum rupee cost (~t ≈ 0.002).
 - **Files:** `src/retainiq/threshold.py`, `data/processed/cost_curve.csv`, `deck/charts/08_cost_curve.png`
 
 ### 2. No leakage + honest stacking (Hansraj → slide 5 / appendix)
@@ -58,7 +58,7 @@ python -m scripts.predict
 
 - Offers were **not** randomized — observational T-learner.
 - IPTW + propensity overlap trim; still directional, not RCT-grade.
-- Only **4** persuadables in training — use segments to **order** actions, not as exact headcount.
+- Only **6** persuadables in training — use segments to **order** actions, not as exact headcount.
 - **Files:** `src/retainiq/uplift.py`, `data/processed/uplift_propensity_summary.json`, `deck/charts/10_uplift_quadrant.png`
 
 ---
@@ -68,13 +68,13 @@ python -m scripts.predict
 | # | Question | Short answer | Where to point |
 |---|----------|--------------|----------------|
 | 1 | Why is PR-AUC 0.9999? Isn’t that suspicious? | Dataset is very separable; we say that upfront. We differentiated on **cost** and **who to call**, not another 0.001 AUC. | `docs/RUN_NOTES.md`, ablation in run notes |
-| 2 | Why threshold 0.001 instead of 0.5? | Cost-optimal for FN/FP weights; same model, ~69% lower OOF cost vs t=0.5. | `src/retainiq/threshold.py`, slide 8 |
+| 2 | Why threshold 0.002 instead of 0.5? | Cost-optimal for FN/FP weights; same model, ~68% lower OOF cost vs t=0.5. | `src/retainiq/threshold.py`, slide 8 |
 | 3 | What’s in the submission CSV? | `churn_probability` = rank stack (PR-AUC column); `churn_prediction` = calibrated + cost threshold. | `src/retainiq/submit.py` |
 | 4 | How do you avoid leakage? | Post-treatment cols dropped; FE fit on train only; meta on OOF; documented audits. | `docs/CAUSAL_FIXES.md`, `tests/test_causal_leakage.py` |
 | 5 | Why keep `retention_offer_received` in the churn model? | Observed pre-decision assignment in train; dropped from uplift **features**; not forced to zero on test. | `docs/CAUSAL_FIXES.md` |
 | 6 | How does uplift work? | T-learner: P(stay given offer) minus P(stay given no offer); IPTW for selection; segments for playbook. | `src/retainiq/uplift.py`, slide 10 |
-| 7 | Only 4 persuadables — is uplift useless? | No — it tells you **not** to blast offers (141 sleeping-dogs). Small N is a **limitation** we state. | `docs/PLAYBOOK.md` |
-| 8 | Fairness? | Gender DP gap ~2.7%, region ~1.3% at operating threshold; both under 10%. | `data/processed/fairness_summary.csv`, slide 12 |
+| 7 | Only 6 persuadables — is uplift useless? | No — it tells you **not** to blast offers (90 sleeping-dogs). Small N is a **limitation** we state. | `docs/PLAYBOOK.md` |
+| 8 | Fairness? | Gender DP gap ~3.1%, region ~1.7% at operating threshold; both under 10%. | `data/processed/fairness_summary.csv`, slide 12 |
 | 9 | Can we reproduce your code? | `pip install -e .` → `python -m scripts.train` → `predict`; 58 pytest tests + CI. | `README.md`, `.github/workflows/test.yml` |
 | 10 | What would you do in production? | Weekly scores, quarterly retrain, PSI on drivers, fairness gate before campaigns. | Slide 14, `docs/PLAYBOOK.md` |
 

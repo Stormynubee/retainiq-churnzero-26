@@ -18,7 +18,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 
 **Visual:** none (title slide)
 
-**Speaker notes:** We did not stop at AUC—we built rupee-optimal retention: who to call, who to leave alone, and what each mistake costs the bank.
+**Speaker notes:** We didn't stop at AUC. The pitch is rupee-optimal retention: who to call, who to leave alone, and what each mistake costs.
 
 **Owner:** both
 
@@ -35,7 +35,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 
 **Visual:** text callout or simple two-bar graphic (80:1)
 
-**Speaker notes:** Everyone ships 0.99 AUC on this dataset. Judges care whether your operating point matches business reality. A missed churner costs eighty times more than a wasted call.
+**Speaker notes:** Everyone ships 0.99 AUC here. What matters is whether your cutoff matches the bank's cost ratio. One missed churner costs eighty times one wasted call.
 
 **Owner:** swayangjeet
 
@@ -52,7 +52,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 
 **Visual:** optional violin/box on `last_login_days`
 
-**Speaker notes:** One EDA insight is enough—do not overclaim. The data is separable; our edge is decision quality, not feature magic.
+**Speaker notes:** One EDA point is enough. Don't overclaim. The data is separable; our edge is the operating point and playbook, not a magic feature.
 
 **Owner:** Hansraj
 
@@ -83,11 +83,10 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 - LightGBM + CatBoost, 5-fold OOF → meta on OOF → Platt calibration
 - Dual CSV: rank blend → `churn_probability`; calibrated + cost threshold → `churn_prediction`
 - IPTW T-learner uplift · fairness audit (gender, region)
-- Validated: pytest + external ML audit ([`docs/CAUSAL_FIXES.md`](../docs/CAUSAL_FIXES.md))
 
 **Visual:** simple flow diagram (optional)
 
-**Speaker notes:** Post-treatment columns dropped before features. Meta trained on out-of-fold predictions—not in-sample ensemble averages. We can re-run and explain every step live.
+**Speaker notes:** Post-treatment columns dropped before features. Meta trained on OOF preds, not in-sample averages. We documented fixes in CAUSAL_FIXES and can re-run the pipeline live.
 
 **Owner:** Hansraj
 
@@ -100,11 +99,11 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 **Bullets:**
 - Logistic baseline → LightGBM → stack → calibrated: PR-AUC ≈ **0.99** at each step
 - Gains on AUC are flat on this dataset
-- **We win on the decision layer:** threshold + uplift + playbook
+- **Where we win:** cost-optimal cutoff + uplift + playbook
 
 **Visual:** small progression table
 
-**Speaker notes:** Be honest: you cannot win Round 2 on model score alone. Our story is cost and retention policy.
+**Speaker notes:** You can't win Round 2 on AUC alone. Say that upfront. Our story is cost and who gets an offer.
 
 **Owner:** Hansraj
 
@@ -121,7 +120,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 
 **Visual:** table (on-slide)
 
-**Speaker notes:** Lead with PR-AUC per rubric, then immediately pivot to cost— that is what changes bank P&L.
+**Speaker notes:** Lead with PR-AUC for the rubric, then pivot to cost. That's what moves P&L.
 
 **Owner:** Hansraj
 
@@ -172,7 +171,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 
 **Visual:** `deck/charts/10_uplift_quadrant.png`
 
-**Speaker notes:** Say the caveat out loud. Small persuadable N is honest—policy is prioritize the few, protect the many from harm.
+**Speaker notes:** Say the caveat out loud: offers weren't randomized. Six persuadables is a small N—we use uplift to order actions, not as a census.
 
 **Owner:** swayangjeet
 
@@ -183,14 +182,13 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 **On-slide title:** Case study — persuadable segment
 
 **Bullets:**
-- Customer **138223** · P(churn) **0.001** · CATE **+0.95** (persuadable)
-- Uplift: offer strongly associated with staying for this profile
-- Actions: targeted RM call · resolve complaints · timed waiver—not mass blast
-- Regenerate: `python -m scripts.pick_persuadable_story`
+- Customer **140348** · P(churn) **0.96** · CATE **+0.35** (persuadable)
+- High uplift in persuadable band — not a mass promotional blast
+- Actions: targeted RM call · resolve complaints · timed waiver
 
 **Visual:** none or simple card layout
 
-**Speaker notes:** Walk through one row from `uplift_per_customer.csv`. Three concrete actions the RM can take this week.
+**Speaker notes:** Pick one persuadable row from uplift_per_customer.csv. If P(churn) looks low on slide, explain: persuadable means high CATE in the risk band, not necessarily the highest churn score. Regenerate story JSON with pick_persuadable_story.
 
 **Owner:** swayangjeet
 

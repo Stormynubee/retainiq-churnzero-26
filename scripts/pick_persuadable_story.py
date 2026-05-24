@@ -20,11 +20,15 @@ def main() -> None:
         raise SystemExit("Run: python -m scripts.build_artifacts")
 
     df = pd.read_csv(path)
-    persuadable = df[df["segment"] == "persuadable"].sort_values("cate", ascending=False)
+    persuadable = df[df["segment"] == "persuadable"]
     if persuadable.empty:
         raise SystemExit("No persuadable segment rows")
 
-    row = persuadable.iloc[0]
+    median_p = persuadable["churn_proba"].median()
+    candidates = persuadable[persuadable["churn_proba"] >= median_p]
+    pool = candidates if not candidates.empty else persuadable
+    row = pool.sort_values("cate", ascending=False).iloc[0]
+
     p_churn = round(float(row["churn_proba"]), 3)
     cate = round(float(row["cate"]), 3)
     story = {
@@ -34,7 +38,7 @@ def main() -> None:
         "segment": str(row["segment"]),
         "talking_points": [
             f"Uplift CATE = +{cate}: offer strongly associated with staying for this profile.",
-            f"Portfolio churn score = {p_churn}; segment = persuadable (offer helps).",
+            f"Churn score = {p_churn} (persuadable band: high CATE + above-median risk in segment).",
             "Actions: targeted RM call, resolve complaints, timed waiver—not mass campaigns.",
         ],
     }

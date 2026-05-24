@@ -15,11 +15,11 @@ from pptx import Presentation
 from pptx.util import Inches, Pt
 
 from retainiq import config
+from retainiq.deck_metrics import DeckMetrics, load_deck_metrics
 
 CHARTS = ROOT / "deck" / "charts"
 DEFAULT_OUT = ROOT / "deck" / "ChurnZero_RetainIQ_Presentation.pptx"
 
-# 16:9 widescreen
 SLIDE_W = Inches(13.333)
 SLIDE_H = Inches(7.5)
 
@@ -31,18 +31,23 @@ def _slide11_bullets() -> list[str]:
         return [
             f"Customer {story['customer_id']} · segment: {story['segment']}",
             f"P(churn) = {story['churn_proba']} · CATE = +{story['cate']}",
+            "High uplift in persuadable band (CATE + risk), not mass blast",
             story["talking_points"][0],
-            story["talking_points"][1],
             story["talking_points"][2],
         ]
     return [
-        "High P(churn) + positive CATE → prioritized RM call",
-        "Not a mass promotional blast",
         "Run: python -m scripts.pick_persuadable_story",
+        "(after build_artifacts)",
+        "High uplift + risk band → targeted RM call",
+        "Not a mass promotional blast",
     ]
 
 
-def _slides_spec() -> list[dict[str, Any]]:
+def _slides_spec(m: DeckMetrics) -> list[dict[str, Any]]:
+    t_label = f"{m.threshold:.3f}".rstrip("0").rstrip(".")
+    if len(t_label.split(".")[-1]) < 3 and m.threshold < 0.01:
+        t_label = f"{m.threshold:.3f}"
+
     return [
         {
             "title": "RetainIQ — Who to call, and what it costs",
@@ -81,23 +86,26 @@ def _slides_spec() -> list[dict[str, Any]]:
                 "LGB + CatBoost OOF → meta on OOF → Platt calibration",
                 "Rank → churn_probability; calibrated + cost → churn_prediction",
                 "IPTW uplift · fairness (gender, region)",
-                "Validated: pytest + CAUSAL_FIXES audit",
             ],
         },
         {
             "title": "Model journey (PR-AUC saturated)",
             "bullets": [
-                "Logistic → LGB → stack → calibrated: PR-AUC ≈ 0.99",
+                f"Logistic → LGB → stack → calibrated: PR-AUC ≈ {m.pr_auc}",
                 "AUC gains are flat on this dataset",
-                "We win on the decision layer: threshold + uplift",
+                "Where we win: cost-optimal cutoff + uplift + playbook",
             ],
         },
         {
             "title": "Out-of-fold results",
             "table": [
-                ["", "t = 0.002", "t = 0.5"],
-                ["PR-AUC", "0.9999", "0.9999"],
-                ["Business cost (INR)", "65,000", "202,500"],
+                ["", f"t = {t_label}", "t = 0.5"],
+                ["PR-AUC", str(m.pr_auc), str(m.pr_auc)],
+                [
+                    "Business cost (INR)",
+                    f"{m.cost_optimal_inr:,}",
+                    f"{m.cost_naive_inr:,}",
+                ],
                 ["Recall", "99.9%", "99.6%"],
             ],
             "bullets": ["5-fold OOF · seed 42 · primary metric: PR-AUC"],
@@ -105,8 +113,8 @@ def _slides_spec() -> list[dict[str, Any]]:
         {
             "title": "Same model, different cutoff",
             "bullets": [
-                "Cost-optimal threshold 0.002 vs naive 0.5",
-                "₹137,500 saved on 8,101 customers (~68%)",
+                f"Cost-optimal threshold {t_label} vs naive 0.5",
+                f"₹{m.savings_inr:,} saved on 8,101 customers (~{m.savings_pct:.0f}%)",
             ],
             "image": CHARTS / "08_cost_curve.png",
         },
@@ -122,8 +130,8 @@ def _slides_spec() -> list[dict[str, Any]]:
         {
             "title": "Who is worth calling?",
             "bullets": [
-                "6 persuadables — offer helps (CATE +0.40 avg)",
-                "90 sleeping-dogs — offer may hurt (CATE -0.30 avg)",
+                f"{m.persuadable_n} persuadables — offer helps (CATE +{m.persuadable_avg_cate:.2f} avg)",
+                f"{m.sleeping_dog_n} sleeping-dogs — offer may hurt (CATE {m.sleeping_dog_avg_cate:.2f} avg)",
                 "Offers not randomized — IPTW; directional only",
             ],
             "image": CHARTS / "10_uplift_quadrant.png",
@@ -135,7 +143,7 @@ def _slides_spec() -> list[dict[str, Any]]:
         {
             "title": "Fairness at operating threshold",
             "bullets": [
-                "Gender DP gap: 3.1% · Region: 1.7% (limit 10%)",
+                f"Gender DP gap: {m.gender_dp_gap_pct}% · Region: {m.region_dp_gap_pct}% (limit 10%)",
                 "Equal opportunity gaps ≈ 0",
             ],
             "image": CHARTS / "12_fairness.png",
@@ -146,7 +154,7 @@ def _slides_spec() -> list[dict[str, Any]]:
                 "Persuadable → RM call + waiver",
                 "Sleeping-dog → no promotional contact",
                 "Lost-cause / sure-thing → low-touch or cross-sell",
-                "ROI: ₹137.5k saved (~₹17/customer)",
+                f"ROI: ₹{m.savings_inr / 1000:.1f}k saved (~₹{m.savings_inr / 8101:.0f}/customer)",
             ],
         },
         {
@@ -174,7 +182,7 @@ def _add_title_content_slide(
     image_path: Path | None = None,
     table_rows: list[list[str]] | None = None,
 ) -> None:
-    layout = prs.slide_layouts[1]  # title + content
+    layout = prs.slide_layouts[1]
     slide = prs.slides.add_slide(layout)
     slide.shapes.title.text = title
 
@@ -231,12 +239,14 @@ def _add_title_content_slide(
 
 
 def build_deck(out_path: Path | None = None) -> Path:
+    m = load_deck_metrics()
+    specs = _slides_spec(m)
     out = Path(out_path or os.environ.get("RETAINIQ_DECK_OUT", DEFAULT_OUT))
     prs = Presentation()
     prs.slide_width = SLIDE_W
     prs.slide_height = SLIDE_H
 
-    for spec in _slides_spec():
+    for spec in specs:
         _add_title_content_slide(
             prs,
             spec["title"],
@@ -252,7 +262,7 @@ def build_deck(out_path: Path | None = None) -> Path:
 
 def main() -> None:
     path = build_deck()
-    print(f"Wrote {path} ({len(_slides_spec())} slides)")
+    print(f"Wrote {path} ({len(_slides_spec(load_deck_metrics()))} slides)")
 
 
 if __name__ == "__main__":

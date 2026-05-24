@@ -13,6 +13,16 @@ Output: `deck/ChurnZero_RetainIQ_Presentation.pptx` (15 slides).
 
 Copy reference: [`retainiq_slides_content.md`](retainiq_slides_content.md) · speaker notes · [`docs/JUDGE_QA.md`](../docs/JUDGE_QA.md)
 
+## Charts in git
+
+Deck PNGs live under `deck/charts/`. If missing locally:
+
+```powershell
+python -m scripts.build_artifacts
+```
+
+Then re-run `build_deck_pptx`.
+
 ## Manual polish (30–60 min)
 
 1. Open PPTX — fix alignment, team branding (IIT logo optional).
@@ -35,6 +45,16 @@ Unzip `submission/ChurnZero_RetainIQ.zip` once — confirm CSV, PDF, and `retain
 
 - Slide **8** — hero cost curve (pause 20 seconds)
 - Slide **10** — uplift + “offers not randomized”
-- Slide **11** — one persuadable story
+- Slide **11** — one persuadable story (read aloud: if P(churn) looks low, explain persuadable = high CATE in risk band, not always top churn score)
 
-Sign [`reviews/qa_checklist.md`](../reviews/qa_checklist.md) when done.
+## Anti-drift
+
+After any retrain, run:
+
+```powershell
+python -m scripts.pick_persuadable_story
+python -m scripts.build_deck_pptx
+python -m pytest tests/test_deck_metrics_consistency.py -q
+```
+
+Sign [`reviews/qa_checklist.md`](../reviews/qa_checklist.md) when PDF is exported.

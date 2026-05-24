@@ -74,5 +74,5 @@ We skipped DiCE / fairlearn / causalml in code — uplift and fairness are hand-
 
 - PR-AUC ~1.0 — can't win on model score alone
 - `retention_offer_received` is not a randomised experiment
-- Only 4 persuadables in training — uplift is directionally right, not precise counts
+- Only 6 persuadables in training — uplift is directionally right, not precise counts
 - No production deployment in Round 2 — that's Round 3 if we get there

@@ -78,7 +78,7 @@ Review findings from external ML audits — tracked in two waves.
 
 ### Fairness threshold shifting — skipped
 
-OOF demographic parity gaps remain **under 10%** (gender ~2.7%, region ~1.3%). No per-group threshold adjustment on submission.
+OOF demographic parity gaps remain **under 10%** (gender ~3.1%, region ~1.7%). No per-group threshold adjustment on submission.
 
 ---
 
