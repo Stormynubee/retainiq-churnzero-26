@@ -89,7 +89,7 @@ def _slides_spec(m: DeckMetrics) -> list[dict[str, Any]]:
             ],
         },
         {
-            "title": "Model journey (PR-AUC saturated)",
+            "title": "Model scores plateau — cutoff still matters",
             "bullets": [
                 f"Logistic → LGB → stack → calibrated: PR-AUC ≈ {m.pr_auc}",
                 "AUC gains are flat on this dataset",
@@ -162,7 +162,7 @@ def _slides_spec(m: DeckMetrics) -> list[dict[str, Any]]:
             "bullets": [
                 "Weekly CRM scores · quarterly retrain · PSI on drivers",
                 "python -m scripts.train · 58 pytest tests + CI",
-                "Limits: observational uplift, saturated AUC",
+                "Limits: observational uplift, PR-AUC ~1.0 on this dataset",
             ],
         },
         {

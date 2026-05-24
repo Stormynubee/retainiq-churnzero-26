@@ -94,7 +94,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 
 ## Slide 6 — Model journey
 
-**On-slide title:** Model journey (PR-AUC saturated)
+**On-slide title:** Model scores plateau — cutoff still matters
 
 **Bullets:**
 - Logistic baseline → LightGBM → stack → calibrated: PR-AUC ≈ **0.99** at each step
@@ -103,7 +103,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 
 **Visual:** small progression table
 
-**Speaker notes:** You can't win Round 2 on AUC alone. Say that upfront. Our story is cost and who gets an offer.
+**Speaker notes:** We tried logistic → LGB → stack; PR-AUC barely moved. The bank still picks a threshold—we optimized that. Lead with cost and who gets an offer.
 
 **Owner:** Hansraj
 
@@ -137,7 +137,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 
 **Visual:** `deck/charts/08_cost_curve.png` (full width)
 
-**Speaker notes:** Hansraj explains axes and optimal line. swayangjeet delivers the INR savings line. This is our hero moment.
+**Speaker notes:** Hansraj explains axes and optimal line. swayangjeet delivers the INR savings line. Pause ~20s on the INR line.
 
 **Owner:** Hansraj + swayangjeet
 
@@ -236,7 +236,7 @@ Font 28–32 pt titles, 18–22 pt body, max 5 bullets per slide.
 **Bullets:**
 - Weekly batch scores to CRM · quarterly retrain · PSI on top features
 - Reproducible: `python -m scripts.train` → **58** pytest tests + CI
-- Limits: observational uplift, saturated AUC, model governance / RBI disclosure
+- Limits: observational uplift, PR-AUC ~1.0 on this dataset, model governance / RBI disclosure
 
 **Visual:** none
 

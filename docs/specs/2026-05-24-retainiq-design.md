@@ -33,7 +33,7 @@ For calibrated scores, the Bayes-optimal cutoff is roughly:
 t* ≈ 500 / (40000 + 500) ≈ 0.0123
 ```
 
-Everyone defaults to 0.5. We sweep and pick the minimum-cost threshold on OOF predictions. That's the main "business" differentiator — the model is already saturated.
+Everyone defaults to 0.5. We sweep and pick the minimum-cost threshold on OOF predictions. That's the main business differentiator—scores barely move across model families on this dataset.
 
 ## Pipeline (actual code)
 
@@ -72,7 +72,7 @@ We skipped DiCE / fairlearn / causalml in code — uplift and fairness are hand-
 
 ## Honest limitations (say these in the deck)
 
-- PR-AUC ~1.0 — can't win on model score alone
+- PR-AUC ~1.0 on this dataset — differentiation is cost + uplift, not another 0.001 AUC bump
 - `retention_offer_received` is not a randomised experiment
 - Only 6 persuadables in training — uplift is directionally right, not precise counts
 - No production deployment in Round 2 — that's Round 3 if we get there

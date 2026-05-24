@@ -161,7 +161,7 @@ ROI line: **INR 137.5k saved** on training cohort (scale to per-1L customers if 
 
 - Weekly batch scores to CRM
 - Retrain quarterly; PSI on top features
-- Risks: selection bias in offers, saturated AUC, RBI-style disclosure
+- Risks: selection bias in offers, PR-AUC ~1.0 on this dataset, RBI-style disclosure
 
 ---
 

@@ -54,6 +54,13 @@ def main() -> None:
     if r.returncode != 0:
         errors.append("doc metrics consistency tests failed")
 
+    r = subprocess.run(
+        [sys.executable, "-m", "pytest", "tests/test_authenticity_phrases.py", "-q"],
+        cwd=ROOT,
+    )
+    if r.returncode != 0:
+        errors.append("authenticity phrase guard failed")
+
     for w in warnings:
         print(f"WARN: {w}")
     if errors:

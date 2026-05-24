@@ -115,3 +115,21 @@ python -m scripts.predict
 | Code | 15% | Reproducible `scripts/train` |
 
 See also: [`docs/specs/2026-05-24-retainiq-design.md`](specs/2026-05-24-retainiq-design.md)
+
+---
+
+## If they say it looks AI-generated
+
+Do not argue or get defensive. Pivot to evidence:
+
+1. Open [`docs/CAUSAL_FIXES.md`](CAUSAL_FIXES.md) — walk **FLAW 1** (post-treatment leakage) in your own words.
+2. Run `python -m pytest tests/test_stacking_train.py tests/test_causal_leakage.py -q` (60s).
+3. Show `data/processed/cost_curve.csv` + slide 8 chart — numbers come from OOF sweep, not slide copy.
+
+**Roles:** Hansraj runs the demo path above. swayangjeet owns slide 8 INR line without reading bullets verbatim.
+
+**RetainIQ name (15 sec):** *We called it RetainIQ because the product is retention intelligence—who to call and what it costs—not because the AUC is special.*
+
+**Sparse git history:** Point reviewers to [`docs/ITERATION.md`](ITERATION.md) and [`docs/PROVENANCE.md`](PROVENANCE.md) — history was rewritten with `filter-repo`; phased work is in causal audits and tests.
+
+**PR-AUC ~1.0:** Same as Q1 in the table — separable data, leakage ablation in RUN_NOTES, compete on cost and uplift.

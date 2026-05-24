@@ -10,8 +10,12 @@
 
 <p align="center">
   <b>RetainIQ</b> — Round 2 submission for banking churn prediction at ChurnZero 26.<br/>
-  OOF stacking + dual-track submission + cost-optimal threshold + IPTW uplift + fairness audit.<br/>
+  Cost-optimal threshold + dual-track CSV + IPTW uplift + fairness audit (OOF stacking underneath).<br/>
   Built by <b>Hansraj Tiwari</b> (ML) & <b>swayangjeet nayak</b> (deck & strategy).
+</p>
+
+<p align="center">
+  <i>RetainIQ</i> = retention intelligence — who to call and what it costs at the operating point, not a claim about model novelty.
 </p>
 
 ---
@@ -26,23 +30,21 @@
 
 Pre-upload gate: `python -m scripts.pre_upload_check`
 
+**Reviewers:** [`docs/PROVENANCE.md`](docs/PROVENANCE.md) · [`docs/ITERATION.md`](docs/ITERATION.md) · [`docs/CAUSAL_FIXES.md`](docs/CAUSAL_FIXES.md) · [`CHANGELOG.md`](CHANGELOG.md)
+
 ---
 
 ## Why RetainIQ
 
-Most teams will hit PR-AUC ≈ 0.99 on this dataset — it's very separable. We focused on what judges actually care about beyond the scoreboard:
+PR-AUC is ~**1.0** on this dataset (very separable; we document leakage checks in [`tests/test_causal_leakage.py`](tests/test_causal_leakage.py) and ablation notes in [`docs/RUN_NOTES.md`](docs/RUN_NOTES.md)). We competed on **rupee cost at the operating point** and **who should get an offer**:
 
 | Layer | What it does | Headline result |
 |---|---|---|
-| **Prediction** | LightGBM + CatBoost OOF → meta on OOF → **Platt calibration** | PR-AUC **0.9999** (5-fold OOF) |
-| **Submission** | Rank blend → `churn_probability`; calibrated stack → `churn_prediction` @ cost threshold | Leaderboard column + rupee-optimal binary |
 | **Threshold** | Sweep thresholds; minimise rupee cost (FN ₹40k, FP ₹500) | **₹65,000** vs ₹202,500 @ t=0.5 — **~68% savings** |
+| **Submission** | Rank blend → `churn_probability`; calibrated stack → `churn_prediction` @ cost threshold | Leaderboard column + rupee-optimal binary |
 | **Uplift** | IPTW T-learner on `retention_offer_received` (overlap trim) | **6** persuadables, **90** sleeping dogs |
 | **Fairness** | Demographic parity on gender & region @ operating threshold | Both under **10%** parity gap |
-
-> The model is saturated. The business story is in the threshold, uplift, and retention playbook — not another 0.001 AUC bump.
-
-Methodology notes: [`docs/CAUSAL_FIXES.md`](docs/CAUSAL_FIXES.md)
+| **Prediction** | LightGBM + CatBoost OOF → meta on OOF → **Platt calibration** | PR-AUC **0.9999** (5-fold OOF; see leakage test above) |
 
 ---
 
