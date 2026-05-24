@@ -97,9 +97,9 @@ tests/            pytest unit + smoke + integration
 
 ---
 
-## Judge path (60 seconds)
+## Quick verify
 
-No competition CSVs needed to verify code quality:
+No competition CSVs needed to check the repo:
 
 ```powershell
 pip install -e ".[dev]"
@@ -117,6 +117,8 @@ python -m scripts.predict
 ```
 
 **Read next:** [`docs/PLAYBOOK.md`](docs/PLAYBOOK.md) · [`docs/RESULTS.md`](docs/RESULTS.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/CAUSAL_FIXES.md`](docs/CAUSAL_FIXES.md)
+
+Pitch prep (team internal): [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md)
 
 ---
 

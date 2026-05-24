@@ -4,6 +4,15 @@
 
 **Arc:** we predict churn, but the interesting part is *who to call* and *what it costs*.
 
+**Prep doc:** [`docs/JUDGE_QA.md`](../docs/JUDGE_QA.md) — demo script, Q&A, speaker split.
+
+## Speaker ownership
+
+| Person | Owns on stage |
+|--------|----------------|
+| **Hansraj Tiwari** | Pipeline (slides 5–7), cost curve mechanics (8), leakage/stacking if challenged, live repro |
+| **swayangjeet nayak** | INR story (2, 8), uplift quadrants (10), customer story (11), fairness policy (12), playbook + ROI (13), close |
+
 ---
 
 ## Slide 1 — Title
@@ -43,10 +52,13 @@ Bar chart: churn rate by segment × tenure bucket.
 
 ## Slide 5 — Approach (one slide)
 
+**Speaker: Hansraj**
+
 - LightGBM + CatBoost, 5-fold OOF, logistic meta on OOF, Platt calibration
 - Rank stack for `churn_probability`; calibrated stack + cost threshold for `churn_prediction`
 - T-learner uplift on `retention_offer_received` with IPTW + overlap trim
 - Fairness on gender + region
+- Footer line: *Validated with pytest + external ML audit → fixes in `docs/CAUSAL_FIXES.md`*
 
 ---
 
@@ -73,12 +85,14 @@ Lead with PR-AUC as primary metric per rubric.
 
 ## Slide 8 — Cost curve (main slide)
 
+**Speaker: Hansraj (chart) → swayangjeet (INR line)**
+
 PNG: `deck/charts/08_cost_curve.png`
 
 - Vertical line at 0.5 vs our threshold (~0.001)
 - Caption: same model, **INR 138k saved** on 8,101 customers vs naive cutoff
 
-Speaker: pause here — judges asked for business cost.
+Pause here — judges asked for business cost.
 
 ---
 
@@ -91,6 +105,8 @@ Mark which levers the bank can actually change (logins, complaints, campaigns) v
 ---
 
 ## Slide 10 — Uplift
+
+**Speaker: swayangjeet** (Hansraj covers IPTW only if asked)
 
 PNG: `deck/charts/10_uplift_quadrant.png`
 
@@ -166,3 +182,20 @@ Contact emails if you want them on the slide.
 | 12 | `deck/charts/12_fairness.png` |
 
 Regenerate: `python -m scripts.build_artifacts`
+
+---
+
+## Appendix — Methodology backup (optional, not in 15-slide count)
+
+Use only if a judge challenges leakage, calibration, or uplift.
+
+**Speaker: Hansraj**
+
+| Topic | One line |
+|-------|----------|
+| Post-treatment leakage | Dropped `retention_offer_accepted` and waiver cols before features |
+| Calibration | Platt fit on **OOF meta** only — not in-sample |
+| Stacking | Meta trained on OOF base preds; inference uses ensemble-averaged folds |
+| Uplift | IPTW + propensity trim [0.05, 0.95]; offers still observational |
+
+Source: [`docs/CAUSAL_FIXES.md`](../docs/CAUSAL_FIXES.md)

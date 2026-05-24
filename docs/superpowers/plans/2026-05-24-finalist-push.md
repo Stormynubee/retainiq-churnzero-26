@@ -1,6 +1,6 @@
 # RetainIQ Finalist Push — executed 2026-05-24
 
-Implementation record for the finalist plan (source plan in Cursor, not committed).
+Implementation record for the finalist push (May 2026).
 
 ## Shipped
 
