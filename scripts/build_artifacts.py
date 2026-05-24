@@ -17,9 +17,9 @@ try:
 except Exception:
     pass
 
-from retainiq import config, data, fairness, features, uplift  # noqa: E402
+from retainiq import artifacts, config, data, fairness, features, uplift  # noqa: E402
 
-CHART_DIR = config.PROJECT_ROOT / "deck" / "charts"
+CHART_DIR = artifacts.chart_dir()
 CHART_DIR.mkdir(parents=True, exist_ok=True)
 
 plt.rcParams.update(
@@ -94,7 +94,11 @@ def chart_cost_curve():
 
 
 def chart_feature_importance():
-    df = pd.read_csv(config.DATA_PROCESSED / "feature_importances.csv").head(12).iloc[::-1]
+    imp_path = artifacts.feature_importances_path()
+    if not imp_path.is_file():
+        print(f"  skip 09_feature_importance.png — run train first (missing {imp_path.name})")
+        return
+    df = pd.read_csv(imp_path).head(12).iloc[::-1]
     pretty = df["feature"].str.replace("_", " ").str.title()
 
     fig, ax = plt.subplots(figsize=(9, 6))
@@ -226,6 +230,11 @@ def run_fairness_and_chart(per_customer: pd.DataFrame):
 
 
 def main():
+    artifacts.ensure_dirs()
+    if not artifacts.trained_bundle_exists():
+        raise FileNotFoundError(
+            "Trained artifacts missing. Run: python -m scripts.train"
+        )
     print("charts...")
     chart_cost_curve()
     chart_feature_importance()

@@ -1,7 +1,11 @@
 """Train and predict — called from scripts/train.py and scripts/predict.py."""
 
+from __future__ import annotations
+
 import json
+import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import joblib
@@ -14,20 +18,41 @@ try:
 except Exception:
     pass
 
-from . import config, data, evaluate, features, models, submit
+from . import artifacts, config, data, evaluate, features, importance, models, submit
 from .threshold import cost_curve, find_cost_optimal_threshold
 
-BUNDLE_PATH = config.DATA_PROCESSED / "stacked_bundle.joblib"
-THRESHOLD_PATH = config.DATA_PROCESSED / "cost_optimal_threshold.json"
-METRICS_PATH = config.DATA_PROCESSED / "training_metrics.json"
-COST_CURVE_PATH = config.DATA_PROCESSED / "cost_curve.csv"
-OOF_PATH = config.DATA_PROCESSED / "oof_predictions.parquet"
-FE_STATE_PATH = config.DATA_PROCESSED / "fe_state.joblib"
+
+@dataclass
+class TrainOptions:
+    train_path: Path | str | None = None
+    n_splits: int = config.N_SPLITS
+    lgb_num_boost_round: int = 2000
+    lgb_early_stopping: int = 100
+    cat_iterations: int = 2000
+    cat_od_wait: int = 100
 
 
-def train() -> dict:
+def _git_commit() -> str | None:
+    try:
+        return (
+            subprocess.check_output(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=config.PROJECT_ROOT,
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+    except Exception:
+        return None
+
+
+def train(options: TrainOptions | None = None) -> dict:
+    opts = options or TrainOptions()
+    artifacts.ensure_dirs()
+
     print("loading train...")
-    df_train = data.load_train()
+    df_train = data.load_train(opts.train_path or config.TRAIN_CSV)
     stats = data.quick_stats(df_train)
     print(f"  {stats['rows']} rows, churn rate {stats['churn_rate']:.4f}")
 
@@ -38,13 +63,23 @@ def train() -> dict:
     cat_idx = features.list_categorical_indices(X_fe, fe_state)
     print(f"  {X_fe.shape[1]} columns, {len(cat_idx)} categorical")
 
-    splitter = data.stratified_folds(y)
+    splitter = data.stratified_folds(y, n_splits=opts.n_splits)
 
-    print("lightgbm 5-fold oof...")
-    oof_lgb, lgb_models = models.train_lightgbm_oof(X_fe, y, splitter)
+    lgb_params = {
+        "num_boost_round": opts.lgb_num_boost_round,
+        "early_stopping": opts.lgb_early_stopping,
+    }
+    cat_params = {"iterations": opts.cat_iterations, "od_wait": opts.cat_od_wait}
 
-    print("catboost 5-fold oof...")
-    oof_cat, cat_models = models.train_catboost_oof(X_fe, y, splitter, cat_idx)
+    print(f"lightgbm {opts.n_splits}-fold oof...")
+    oof_lgb, lgb_models = models.train_lightgbm_oof(
+        X_fe, y, splitter, params=lgb_params
+    )
+
+    print(f"catboost {opts.n_splits}-fold oof...")
+    oof_cat, cat_models = models.train_catboost_oof(
+        X_fe, y, splitter, cat_idx, params=cat_params
+    )
 
     print("stacker + calibration...")
     meta = models.fit_meta(oof_lgb, oof_cat, y)
@@ -74,11 +109,13 @@ def train() -> dict:
         cat_feature_indices=cat_idx,
         feature_columns=X_fe.columns.tolist(),
     )
-    joblib.dump(bundle, BUNDLE_PATH)
-    joblib.dump(fe_state, FE_STATE_PATH)
+    joblib.dump(bundle, artifacts.bundle_path())
+    joblib.dump(fe_state, artifacts.fe_state_path())
 
-    THRESHOLD_PATH.write_text(json.dumps(best, indent=2))
-    cost_curve(y.values, oof_calibrated).to_csv(COST_CURVE_PATH, index=False)
+    importance.export_feature_importances(bundle, X_fe)
+
+    artifacts.threshold_path().write_text(json.dumps(best, indent=2))
+    cost_curve(y.values, oof_calibrated).to_csv(artifacts.cost_curve_path(), index=False)
 
     pd.DataFrame(
         {
@@ -89,7 +126,7 @@ def train() -> dict:
             "p_stacked": oof_stacked,
             "p_calibrated": oof_calibrated,
         }
-    ).to_parquet(OOF_PATH, index=False)
+    ).to_parquet(artifacts.oof_path(), index=False)
 
     summary = {
         "train_stats": stats,
@@ -97,20 +134,33 @@ def train() -> dict:
         "metrics_naive": metrics_naive,
         "threshold_info": best,
     }
-    METRICS_PATH.write_text(json.dumps(summary, indent=2, default=float))
-    print(f"saved -> {BUNDLE_PATH}")
+    artifacts.metrics_path().write_text(json.dumps(summary, indent=2, default=float))
+    artifacts.write_manifest(
+        {
+            "git_commit": _git_commit(),
+            "train_rows": stats["rows"],
+            "n_splits": opts.n_splits,
+            "optimal_threshold": threshold,
+            "pr_auc": metrics_optimal["pr_auc"],
+            "cost_optimal_inr": metrics_optimal["total_cost_inr"],
+            "cost_naive_inr": metrics_naive["total_cost_inr"],
+        }
+    )
+    print(f"saved -> {artifacts.bundle_path()}")
     return summary
 
 
-def predict() -> Path:
+def predict(test_path: Path | str | None = None) -> Path:
+    artifacts.require_trained()
+
     print("loading test...")
-    df_test = data.load_test()
+    df_test = data.load_test(test_path or config.TEST_CSV)
     test_ids = df_test[config.ID_COL].copy()
     X_raw = df_test.drop(columns=config.DROP_BEFORE_FEATURES)
 
-    fe_state = joblib.load(FE_STATE_PATH)
-    bundle: models.StackedBundle = joblib.load(BUNDLE_PATH)
-    threshold_info = json.loads(THRESHOLD_PATH.read_text())
+    fe_state = joblib.load(artifacts.fe_state_path())
+    bundle: models.StackedBundle = joblib.load(artifacts.bundle_path())
+    threshold_info = json.loads(artifacts.threshold_path().read_text())
     threshold = float(threshold_info["threshold"])
 
     X_fe = features.transform(X_raw, fe_state)
@@ -121,3 +171,11 @@ def predict() -> Path:
     print(f"wrote {out}")
     print(f"  threshold {threshold:.4f}, positive rate {sub['churn_prediction'].mean():.4f}")
     return out
+
+
+def train_cli() -> None:
+    train()
+
+
+def predict_cli() -> None:
+    predict()

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from retainiq import config
+from retainiq import artifacts, config
 
 
 @pytest.fixture
@@ -53,8 +53,4 @@ def raw_data_available() -> bool:
 
 @pytest.fixture
 def trained_artifacts_available() -> bool:
-    return (
-        (config.DATA_PROCESSED / "stacked_bundle.joblib").is_file()
-        and (config.DATA_PROCESSED / "fe_state.joblib").is_file()
-        and (config.DATA_PROCESSED / "cost_optimal_threshold.json").is_file()
-    )
+    return artifacts.trained_bundle_exists()

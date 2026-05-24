@@ -15,7 +15,18 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install
-        run: |
-          pip install -r requirements-dev.txt
-      - name: Unit tests (no slow / no integration)
+        run: pip install -e ".[dev]"
+      - name: Unit tests
         run: pytest -m "not slow and not integration" --cov=retainiq --cov-report=term-missing
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Smoke train on synthetic fixture
+        run: pytest tests/test_smoke_pipeline.py -q

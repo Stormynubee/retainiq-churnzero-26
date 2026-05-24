@@ -37,8 +37,10 @@ Hansraj: ______  swayangjeet: ______
 
 ## Code
 
-- [ ] `pip install -r requirements.txt` works
-- [ ] `python -m scripts.train` then `predict` reproduces the CSV
+- [ ] `pip install -e ".[dev]"` works
+- [ ] `python -m scripts.train` then `build_artifacts` then `predict` reproduces the CSV
+- [ ] `feature_importances.csv` exists after train (chart 09)
+- [ ] CI unit + smoke tests pass
 - [ ] no secrets in repo
 - [ ] raw competition CSVs not committed
 

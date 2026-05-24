@@ -90,17 +90,40 @@ tests/            pytest unit + integration suite
 
 ---
 
-## Quick start
+## Judge path (60 seconds)
 
-Requires Python 3.11+. Drop competition CSVs into `data/raw/` (not included — see disclaimer below).
+No competition CSVs needed to verify code quality:
 
 ```powershell
-pip install -r requirements.txt
+pip install -e ".[dev]"
+python -m pytest -m "not slow and not integration"   # unit tests, ~5s
+python -m pytest tests/test_smoke_pipeline.py        # synthetic train, ~10s
+```
 
-python -m scripts.train            # ~4 min — models + metrics
-python -m scripts.predict          # submission CSV
+With competition data in `data/raw/`:
+
+```powershell
+pip install -e .
+python -m scripts.train
+python -m scripts.build_artifacts
+python -m scripts.predict
+```
+
+**Read next:** [`docs/PLAYBOOK.md`](docs/PLAYBOOK.md) · [`docs/RESULTS.md`](docs/RESULTS.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
+---
+
+## Quick start
+
+Requires Python 3.11+. Drop competition CSVs into `data/raw/` ([details](data/README.md)).
+
+```powershell
+pip install -e ".[dev]"
+
+python -m scripts.train            # ~4 min — models + metrics + importances
 python -m scripts.build_artifacts  # uplift, fairness, deck charts
-python -m scripts.audit_features   # optional leakage sanity check
+python -m scripts.audit_features   # optional top-feature ablation
+python -m scripts.predict          # submission CSV
 ```
 
 ### Tests

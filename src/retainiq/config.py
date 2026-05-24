@@ -14,9 +14,6 @@ TEST_CSV = DATA_RAW / "ChurnZero_test_v1.csv"
 TEAM_NAME = "RetainIQ"
 SUBMISSION_CSV = SUBMISSION_DIR / f"ChurnZero_{TEAM_NAME}_Predictions.csv"
 
-DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
-SUBMISSION_DIR.mkdir(parents=True, exist_ok=True)
-
 RANDOM_SEED = 42
 N_SPLITS = 5
 

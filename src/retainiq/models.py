@@ -45,7 +45,10 @@ def train_lightgbm_oof(
         "force_col_wise": True,
     }
     if params:
-        base_params.update(params)
+        base_params.update({k: v for k, v in params.items() if k not in ("num_boost_round", "early_stopping")})
+
+    num_boost_round = int((params or {}).get("num_boost_round", 2000))
+    early_stopping = int((params or {}).get("early_stopping", 100))
 
     oof = np.zeros(len(y))
     models: list = []
@@ -60,9 +63,9 @@ def train_lightgbm_oof(
         model = lgb.train(
             base_params,
             train_set,
-            num_boost_round=2000,
+            num_boost_round=num_boost_round,
             valid_sets=[val_set],
-            callbacks=[lgb.early_stopping(100), lgb.log_evaluation(0)],
+            callbacks=[lgb.early_stopping(early_stopping), lgb.log_evaluation(0)],
         )
         oof[va] = model.predict(X_va, num_iteration=model.best_iteration)
         models.append(model)

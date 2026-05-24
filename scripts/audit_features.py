@@ -17,31 +17,21 @@ try:
 except Exception:
     pass
 
-from retainiq import config, data, features  # noqa: E402
+from retainiq import artifacts, config, data, features  # noqa: E402
+from retainiq.importance import export_feature_importances  # noqa: E402
 from retainiq.models import StackedBundle  # noqa: E402
 
 
 def main():
     df_train = data.load_train()
     X_raw, y = data.split_features_target(df_train)
-    fe_state = joblib.load(config.DATA_PROCESSED / "fe_state.joblib")
+    fe_state = joblib.load(artifacts.fe_state_path())
     X_fe = features.transform(X_raw, fe_state)
 
-    bundle: StackedBundle = joblib.load(config.DATA_PROCESSED / "stacked_bundle.joblib")
+    bundle: StackedBundle = joblib.load(artifacts.bundle_path())
 
-    importance = np.zeros(X_fe.shape[1], dtype=float)
-    for m in bundle.lgb_models:
-        importance += m.feature_importance(importance_type="gain")
-    importance /= max(len(bundle.lgb_models), 1)
-
-    imp_df = (
-        pd.DataFrame({"feature": X_fe.columns, "lgb_gain": importance})
-        .sort_values("lgb_gain", ascending=False)
-    )
-    imp_df["lgb_gain_pct"] = 100.0 * imp_df["lgb_gain"] / imp_df["lgb_gain"].sum()
-
-    out = config.DATA_PROCESSED / "feature_importances.csv"
-    imp_df.to_csv(out, index=False)
+    imp_df = export_feature_importances(bundle, X_fe)
+    out = artifacts.feature_importances_path()
     print(f"saved {out}\n")
     print(imp_df.head(25).to_string(index=False))
 
@@ -85,7 +75,9 @@ def main():
         "roc_auc_without_top_feature": float(roc_auc),
         "verdict": "likely_leakage" if pr_auc < 0.85 else "feature_is_just_strong",
     }
-    (config.DATA_PROCESSED / "ablation_audit.json").write_text(json.dumps(summary, indent=2))
+    (artifacts.feature_importances_path().parent / "ablation_audit.json").write_text(
+        json.dumps(summary, indent=2)
+    )
     print(f"verdict: {summary['verdict']}")
 
 
