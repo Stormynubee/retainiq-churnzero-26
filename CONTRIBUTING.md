@@ -19,7 +19,9 @@ pip install -e ".[dev]"
 | `python -m scripts.audit_features` | Optional ablation audit |
 | `python -m scripts.predict` | Submission CSV |
 | `python -m scripts.validate_submission` | Pre-upload CSV checks |
+| `python -m scripts.pre_upload_check` | Full gate before Unstop (add `--require-pdf` when ready) |
 | `python -m scripts.package_submission` | Build `submission/ChurnZero_RetainIQ.zip` |
+| `python -m scripts.package_submission --strict` | ZIP requires deck PDF |
 | `python -m scripts.pick_persuadable_story` | Slide 11 customer story JSON |
 | `python -m scripts.build_deck_pptx` | Starter `deck/ChurnZero_RetainIQ_Presentation.pptx` (needs `.[deck]`) |
 

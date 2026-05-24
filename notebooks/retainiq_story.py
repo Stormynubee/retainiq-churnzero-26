@@ -88,15 +88,18 @@ imp
 # %%
 display(Image(filename=str(CHARTS / "10_uplift_quadrant.png")))
 
-pd.read_csv(PROC / "uplift_segmentation.csv")
+uplift_seg = pd.read_csv(PROC / "uplift_segmentation.csv")
+uplift_seg
 
 # %% [markdown]
-# Rough read: most people are sure-things or lost-causes. Only a handful are persuadable.
-# ~141 sleeping-dogs — contacting them may backfire (negative CATE).
-#
-# Offers in the data weren't randomised; we say that on slide 10.
+# Most customers are sure-things or lost-causes. Only a handful are persuadable.
+# Offers in the data were not randomised — we say that on slide 10.
 
 # %%
+n_pers = int(uplift_seg.loc[uplift_seg["segment"] == "persuadable", "n"].iloc[0])
+n_sleep = int(uplift_seg.loc[uplift_seg["segment"] == "sleeping-dog", "n"].iloc[0])
+print(f"{n_pers} persuadables; {n_sleep} sleeping-dogs (negative CATE on average)")
+
 per_cust = pd.read_csv(PROC / "uplift_per_customer.csv")
 per_cust[per_cust["segment"] == "persuadable"].head()
 

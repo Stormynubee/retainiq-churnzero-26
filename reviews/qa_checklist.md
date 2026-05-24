@@ -66,6 +66,8 @@ Final check: unzip locally and open everything once.
 
 Pitch prep: [`docs/JUDGE_QA.md`](../docs/JUDGE_QA.md) (15 min rehearsal).
 
+Pre-upload: `python -m scripts.pre_upload_check --require-pdf` · Guide: [`docs/SUBMISSION.md`](../docs/SUBMISSION.md)
+
 Hansraj: ______  swayangjeet: ______  Date: ______
 
 ---

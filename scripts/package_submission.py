@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import shutil
 from pathlib import Path
 
@@ -18,9 +19,21 @@ OPTIONAL_DECK = [
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Build ChurnZero_RetainIQ.zip")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Require deck/ChurnZero_RetainIQ_Presentation.pdf",
+    )
+    args = parser.parse_args()
+
     missing = [p for p in REQUIRED if not p.is_file()]
     if missing:
         raise SystemExit("Missing: " + ", ".join(p.name for p in missing))
+
+    pdf = ROOT / "deck" / "ChurnZero_RetainIQ_Presentation.pdf"
+    if args.strict and not pdf.is_file():
+        raise SystemExit("Missing deck/ChurnZero_RetainIQ_Presentation.pdf (export PDF first)")
 
     staging = ROOT / "submission" / "_zip_staging"
     if staging.exists():
@@ -28,11 +41,14 @@ def main() -> None:
     staging.mkdir(parents=True)
 
     shutil.copy2(REQUIRED[0], staging / REQUIRED[0].name)
-    deck = next((p for p in OPTIONAL_DECK if p.is_file()), None)
-    if deck:
-        shutil.copy2(deck, staging / deck.name)
+    if args.strict and pdf.is_file():
+        shutil.copy2(pdf, staging / pdf.name)
     else:
-        print("WARN: no deck PDF/pptx in deck/ — add before final upload")
+        deck = next((p for p in OPTIONAL_DECK if p.is_file()), None)
+        if deck:
+            shutil.copy2(deck, staging / deck.name)
+        else:
+            print("WARN: no deck PDF/pptx in deck/ — add before final upload")
 
     code_dir = staging / "retainiq-code"
     shutil.copytree(

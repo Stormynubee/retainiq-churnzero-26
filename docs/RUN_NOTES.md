@@ -130,11 +130,15 @@ Both under 10% on demographic parity.
 
 `deck/charts/08_cost_curve.png`, `09_feature_importance.png`, `10_uplift_quadrant.png`, `12_fairness.png`
 
-### Still todo
+### Still todo (human)
 
-- swayangjeet: PowerPoint/PDF → `deck/ChurnZero_RetainIQ_Presentation.pdf` then re-run `package_submission`
-- optional: DiCE counterfactual for slide 11 (6 persuadables in training)
+- swayangjeet: polish PPTX → export `deck/ChurnZero_RetainIQ_Presentation.pdf`
+- `python -m scripts.pre_upload_check --require-pdf`
+- `python -m scripts.package_submission --strict`
 - Upload `submission/ChurnZero_RetainIQ.zip` to Unstop
+- Record outcome under `## Competition outcome` when known
+
+See [`docs/SUBMISSION.md`](SUBMISSION.md).
 
 ### Slide copy-paste (swayangjeet)
 

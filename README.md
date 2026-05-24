@@ -6,8 +6,6 @@
   <a href="https://github.com/Stormynubee/retainiq-churnzero-26/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/Stormynubee/retainiq-churnzero-26/test.yml?branch=main&style=for-the-badge&label=CI" alt="CI" /></a>
   <a href="https://unstop.com/competitions/churnzero-26-iit-kharagpur-1686181"><img src="https://img.shields.io/badge/ChurnZero%2026-IIT%20Kharagpur-6366F1?style=for-the-badge" alt="ChurnZero 26" /></a>
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/tests-58%20passed-22C55E?style=for-the-badge" alt="Tests" />
-  <img src="https://img.shields.io/badge/PR--AUC-0.9999-22C55E?style=for-the-badge" alt="PR-AUC" />
 </p>
 
 <p align="center">
@@ -15,6 +13,18 @@
   OOF stacking + dual-track submission + cost-optimal threshold + IPTW uplift + fairness audit.<br/>
   Built by <b>Hansraj Tiwari</b> (ML) & <b>swayangjeet nayak</b> (deck & strategy).
 </p>
+
+---
+
+## Submission status
+
+| Item | Status |
+|---|---|
+| Predictions CSV | Ready — `submission/ChurnZero_RetainIQ_Predictions.csv` (2,026 rows) |
+| Deck PDF | Export from PPTX — see [`docs/SUBMISSION.md`](docs/SUBMISSION.md) |
+| ZIP | `python -m scripts.package_submission --strict` (after PDF) |
+
+Pre-upload gate: `python -m scripts.pre_upload_check`
 
 ---
 
@@ -133,8 +143,9 @@ python -m scripts.train            # ~4 min — models + metrics + importances
 python -m scripts.build_artifacts  # uplift, fairness, deck charts
 python -m scripts.audit_features   # optional top-feature ablation
 python -m scripts.predict          # submission CSV
-python -m scripts.validate_submission  # pre-upload checks
-python -m scripts.package_submission   # ChurnZero_RetainIQ.zip
+python -m scripts.validate_submission      # pre-upload CSV checks
+python -m scripts.pre_upload_check           # full gate before Unstop
+python -m scripts.package_submission --strict  # ZIP (requires deck PDF)
 ```
 
 ### Tests

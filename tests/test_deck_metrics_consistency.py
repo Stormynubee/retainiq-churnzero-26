@@ -30,6 +30,7 @@ STALE_SNIPPETS = (
         ("docs/PLAYBOOK.md", "0.002"),
         ("docs/PLAYBOOK.md", "6 in training"),
         ("deck/retainiq_slides_content.md", "137,500"),
+        ("notebooks/retainiq_story.py", "sleeping-dog"),
     ],
 )
 def test_docs_reference_current_threshold_and_savings(rel_path: str, needle: str) -> None:
