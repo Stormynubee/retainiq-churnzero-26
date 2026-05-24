@@ -28,6 +28,7 @@ submission/*.zip
 .ipynb_checkpoints/
 
 # Editor / OS
+.cursor/
 .vscode/
 .idea/
 .DS_Store
